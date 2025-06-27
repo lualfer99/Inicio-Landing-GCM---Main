@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Menu, Calendar, X } from "lucide-react"
+import { Menu, X, Calendar } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import OptimizedImage from "./image-optimization"
 
@@ -41,11 +41,16 @@ export default function OptimizedHeader() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? "bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm"
-          : "bg-white/90 backdrop-blur-sm border-b border-gray-100"
+          ? "bg-gradient-to-r from-gray-50/95 via-white/95 to-blue-50/95 backdrop-blur-md border-b border-gray-200 shadow-lg"
+          : "bg-gradient-to-r from-gray-50/90 via-white/90 to-blue-50/90 backdrop-blur-sm border-b border-gray-100"
       }`}
     >
-      <div className="container mx-auto px-4 lg:px-6">
+      {/* Background decoration matching hero */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+      <div className="absolute top-0 right-10 w-32 h-32 bg-blue-600/5 rounded-full blur-2xl"></div>
+      <div className="absolute top-0 left-10 w-40 h-40 bg-blue-600/3 rounded-full blur-2xl"></div>
+
+      <div className="container mx-auto px-4 lg:px-6 relative">
         <div className="flex items-center justify-between h-20">
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center justify-between w-full">
@@ -79,15 +84,17 @@ export default function OptimizedHeader() {
               ))}
             </nav>
 
-            {/* CTA Button */}
+            {/* CTA Button - Matching Hero Style */}
             <div className="flex items-center">
               <Button
-                size="md"
-                className="btn-primary text-lg md:text-xl px-8 md:px-12 py-4 md:py-6 text-white font-bold rounded-2xl"
-                href="#consulta"
+                size="lg"
+                className="btn-primary text-base px-6 py-3 text-white font-bold rounded-2xl shadow-2xl border-2 border-white/20"
+                asChild
               >
-                <Calendar className="w-5 md:w-6 h-5 md:h-6 mr-2" />
-                AGENDAR ASESORÍA GRATUITA
+                <Link href="#consulta" className="inline-flex items-center gap-2">
+                  <Calendar className="w-5 h-5" />
+                  AGENDAR ASESORÍA GRATUITA
+                </Link>
               </Button>
             </div>
           </div>
@@ -98,23 +105,43 @@ export default function OptimizedHeader() {
             <div className="flex items-center">
               <Sheet open={isOpen} onOpenChange={setIsOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hover:bg-gray-100 p-2">
-                    {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hover:bg-white/50 p-2 rounded-xl backdrop-blur-sm border border-white/20 shadow-md"
+                  >
+                    {isOpen ? <X className="h-6 w-6 text-gray-700" /> : <Menu className="h-6 w-6 text-gray-700" />}
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[320px] sm:w-[400px] bg-white">
-                  <nav className="flex flex-col space-y-6 mt-12">
+                <SheetContent
+                  side="left"
+                  className="w-[320px] sm:w-[400px] bg-gradient-to-br from-gray-50 via-white to-blue-50/30 backdrop-blur-md border-r border-gray-200"
+                >
+                  {/* Background decoration in mobile menu */}
+                  <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+                  <div className="absolute top-10 right-5 w-20 h-20 bg-blue-600/5 rounded-full blur-xl"></div>
+
+                  <nav className="flex flex-col space-y-6 mt-12 relative">
                     {navItems.map((item) => (
                       <button
                         key={item.name}
                         onClick={() => handleNavClick(item.href)}
-                        className="text-gray-700 hover:text-blue-600 font-medium py-3 text-lg transition-colors border-b border-gray-100 last:border-0 text-left"
+                        className="text-gray-700 hover:text-blue-600 font-medium py-3 text-lg transition-colors border-b border-gray-100 last:border-0 text-left hover:bg-white/30 rounded-lg px-4"
                       >
                         {item.name}
                       </button>
                     ))}
-                    <Button className="btn-primary mt-8 text-base" asChild>
-                      <Link href="#consulta" onClick={() => setIsOpen(false)}>
+                    <Button
+                      size="lg"
+                      className="btn-primary mt-8 text-base px-6 py-4 text-white font-bold rounded-2xl shadow-2xl border-2 border-white/20"
+                      asChild
+                    >
+                      <Link
+                        href="#consulta"
+                        onClick={() => setIsOpen(false)}
+                        className="inline-flex items-center justify-center gap-2"
+                      >
+                        <Calendar className="w-5 h-5" />
                         AGENDAR ASESORÍA
                       </Link>
                     </Button>
@@ -141,17 +168,18 @@ export default function OptimizedHeader() {
               </Link>
             </div>
 
-            {/* Right: CTA Button */}
+            {/* Right: CTA Button - Matching Hero Style */}
             <div className="flex items-center">
               <Button
-                  size="md"
-                  className="btn-primary text-lg md:text-xl px-8 md:px-12 py-4 md:py-6 text-white font-bold rounded-2xl"
-                  href="#consulta"
-                >
-                  <Calendar className="w-5 md:w-6 h-5 md:h-6 mr-2" />
-                  ASESORÍA GRATUITA
+                size="sm"
+                className="btn-primary text-xs px-3 py-2 h-9 whitespace-nowrap text-white font-bold rounded-xl shadow-lg border border-white/20"
+                asChild
+              >
+                <Link href="#consulta" className="inline-flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  ASESORÍA
+                </Link>
               </Button>
-              
             </div>
           </div>
         </div>
