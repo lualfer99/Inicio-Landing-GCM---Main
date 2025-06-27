@@ -5,11 +5,15 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Menu, X, Calendar } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { usePathname } from "next/navigation"
 import OptimizedImage from "./image-optimization"
+import { useRouter } from "next/navigation"
 
 export default function OptimizedHeader() {
   const [isOpen, setIsOpen] = useState(false)
+  const pathname = usePathname()
   const [isScrolled, setIsScrolled] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,7 +25,7 @@ export default function OptimizedHeader() {
 
   const navItems = [
     { name: "Inicio", href: "#inicio" },
-    { name: "Crear LLC", href: "#servicios" },
+    { name: "Crear LLC", href: "#creacion-llc" },
     { name: "Gestoría para LLCs", href: "/gestoria-para-llcs" },
     { name: "Sobre nosotros", href: "#proceso" },
     { name: "FAQ", href: "#faq" },
@@ -29,11 +33,18 @@ export default function OptimizedHeader() {
 
   const handleNavClick = (href: string) => {
     setIsOpen(false)
+
     if (href.startsWith("#")) {
-      const element = document.querySelector(href)
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" })
+      if (pathname !== "/") {
+        router.push("/" + href)
+      } else {
+        const element = document.querySelector(href)
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" })
+        }
       }
+    } else {
+      router.push(href)
     }
   }
 

@@ -13,26 +13,27 @@ export default function Header() {
 
   const navItems = [
     { name: "Inicio", href: "/" },
-    { name: "Crear LLC", href: "#crear-llc" },
+    { name: "Crear LLC", href: "#creacion-llc" },
     { name: "Gestoría para LLCs", href: "/gestoria-para-llcs" },
     { name: "Sobre nosotros", href: "#sobre-nosotros" },
     { name: "Blog", href: "#blog" },
   ]
 
   const handleNavClick = (href: string) => {
+    setIsOpen(false)
+
     if (href.startsWith("#")) {
-      // If it's an anchor link and we're not on the home page, go to home first
       if (pathname !== "/") {
-        window.location.href = "/" + href
+        router.push("/" + href)
       } else {
-        // If we're on the home page, scroll to the section
         const element = document.querySelector(href)
         if (element) {
           element.scrollIntoView({ behavior: "smooth" })
         }
       }
+    } else {
+      router.push(href)
     }
-    setIsOpen(false)
   }
 
   return (
