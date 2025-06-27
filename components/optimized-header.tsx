@@ -22,7 +22,7 @@ export default function OptimizedHeader() {
   const navItems = [
     { name: "Inicio", href: "#inicio" },
     { name: "Crear LLC", href: "#servicios" },
-    { name: "Gestoría para LLCs", href: "#beneficios" },
+    { name: "Gestoría para LLCs", href: "/gestoria-para-llcs" },
     { name: "Sobre nosotros", href: "#proceso" },
     { name: "FAQ", href: "#faq" },
   ]
