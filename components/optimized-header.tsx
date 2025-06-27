@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Menu, X } from "lucide-react"
+import { Menu, Calendar, X } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import OptimizedImage from "./image-optimization"
 
@@ -81,8 +81,13 @@ export default function OptimizedHeader() {
 
             {/* CTA Button */}
             <div className="flex items-center">
-              <Button className="btn-primary text-base" asChild>
-                <Link href="#consulta">AGENDAR ASESORÍA GRATUITA</Link>
+              <Button
+                size="md"
+                className="btn-primary text-lg md:text-xl px-8 md:px-12 py-4 md:py-6 text-white font-bold rounded-2xl"
+                href="#consulta"
+              >
+                <Calendar className="w-5 md:w-6 h-5 md:h-6 mr-2" />
+                AGENDAR ASESORÍA GRATUITA
               </Button>
             </div>
           </div>
@@ -138,9 +143,15 @@ export default function OptimizedHeader() {
 
             {/* Right: CTA Button */}
             <div className="flex items-center">
-              <Button className="btn-primary text-xs px-3 py-2 h-9 whitespace-nowrap" asChild>
-                <Link href="#consulta">ASESORÍA GRATUITA</Link>
+              <Button
+                  size="md"
+                  className="btn-primary text-lg md:text-xl px-8 md:px-12 py-4 md:py-6 text-white font-bold rounded-2xl"
+                  href="#consulta"
+                >
+                  <Calendar className="w-5 md:w-6 h-5 md:h-6 mr-2" />
+                  ASESORÍA GRATUITA
               </Button>
+              
             </div>
           </div>
         </div>

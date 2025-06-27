@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Play, Shield, Zap, TrendingUp } from "lucide-react"
+import { Calendar, Shield, Zap, TrendingUp } from "lucide-react"
 import { useEffect, useState } from "react"
 
 export default function HeroSection() {
@@ -95,7 +95,7 @@ export default function HeroSection() {
               className="btn-primary text-lg md:text-xl px-8 md:px-12 py-4 md:py-6 text-white font-bold rounded-2xl"
               onClick={handleCTAClick}
             >
-              <Play className="w-5 md:w-6 h-5 md:h-6 mr-2" />
+              <Calendar className="w-5 md:w-6 h-5 md:h-6 mr-2" />
               ASESORÍA FISCAL GRATUITA
             </Button>
             <p className="text-sm text-gray-500 mt-4">⚡ Respuesta en menos de 24 horas • 🔒 Sin compromiso</p>

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { Check, Clock, Shield, Zap, Award, Users } from "lucide-react"
+import { Check, Clock, Calendar, Shield, Zap, Award, Users } from "lucide-react"
 import Link from "next/link"
 
 export default function ServicesSection() {
@@ -86,11 +86,13 @@ export default function ServicesSection() {
               Tendremos listos todos los papeles en menos de 10 días, para que puedas empezar a recibir pagos de tus
               clientes.
             </p>
-            <Button size="lg" className="btn-primary text-xl px-12 py-6 rounded-2xl" asChild>
-              <Link href="#consulta" className="inline-flex items-center gap-3">
-                <Clock className="w-6 h-6" />
-                ASESORÍA GRATUITA
-              </Link>
+            <Button
+              size="lg"
+              className="btn-primary text-lg md:text-xl px-8 md:px-12 py-4 md:py-6 text-white font-bold rounded-2xl"
+              href="#consulta"
+            >
+              <Calendar className="w-5 md:w-6 h-5 md:h-6 mr-2" />
+              ASESORÍA FISCAL GRATUITA
             </Button>
             <p className="text-sm text-gray-500 mt-4">
               ⚡ Sin compromiso • 🔒 Consulta confidencial • 📞 Respuesta inmediata
