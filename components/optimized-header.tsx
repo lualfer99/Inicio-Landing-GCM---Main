@@ -98,12 +98,12 @@ export default function OptimizedHeader() {
             {/* CTA Button - Matching Hero Style */}
             <div className="flex items-center">
               <Button
-                  size="sm"
-                  className="btn-primary text-xs md:text-xl px-8 md:px-12 py-4 md:py-6 text-white font-bold rounded-xl shadow-lg border border-white/20"
-                  onClick={() => handleNavClick("#consulta")}
-                >
-                  <Calendar className="w-5 md:w-6 h-5 md:h-6" />
-                  AGENDAR ASESORÍA GRATUITA
+                size="sm"
+                className="btn-primary text-xs md:text-xl px-8 md:px-12 py-4 md:py-6 text-white font-bold rounded-xl shadow-lg border border-white/20"
+                onClick={() => handleNavClick("#consulta")}
+              >
+                <Calendar className="w-5 md:w-6 h-5 md:h-6" />
+                AGENDAR ASESORÍA GRATUITA
               </Button>
             </div>
           </div>
@@ -118,7 +118,6 @@ export default function OptimizedHeader() {
                     variant="ghost"
                     size="icon"
                     className="hover:bg-white/50 p-2 rounded-xl backdrop-blur-sm border border-white/20 shadow-md"
-                    onClick={() => handleNavClick("#consulta")}
                   >
                     {isOpen ? <X className="h-6 w-6 text-gray-700" /> : <Menu className="h-6 w-6 text-gray-700" />}
                   </Button>
@@ -145,9 +144,8 @@ export default function OptimizedHeader() {
                       size="lg"
                       className="btn-primary mt-8 text-base px-6 py-4 text-white font-bold rounded-2xl shadow-2xl border-2 border-white/20"
                       onClick={() => handleNavClick("#consulta")}
-                      asChild
                     >
-                      <Calendar className="w-5 h-5" />
+                      <Calendar className="w-5 h-5 mr-2" />
                       AGENDAR ASESORÍA
                     </Button>
                   </nav>
