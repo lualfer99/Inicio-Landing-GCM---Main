@@ -87,14 +87,13 @@ export default function OptimizedHeader() {
             {/* CTA Button - Matching Hero Style */}
             <div className="flex items-center">
               <Button
-                size="lg"
-                className="btn-primary text-base px-6 py-3 text-white font-bold rounded-2xl shadow-2xl border-2 border-white/20"
-                asChild
-              >
-                <Link href="#consulta" className="inline-flex items-center gap-2">
-                  <Calendar className="w-5 h-5" />
-                  AGENDAR ASESORÍA GRATUITA
-                </Link>
+                  size="sm"
+                  className="btn-primary text-xs md:text-xl px-8 md:px-12 py-4 md:py-6 text-white font-bold rounded-xl shadow-lg border border-white/20"
+                >
+                  <Link href="#consulta" className="inline-flex items-center gap-1">
+                    <Calendar className="w-5 md:w-6 h-5 md:h-6" />
+                    AGENDAR ASESORÍA GRATUITA
+                  </Link>
               </Button>
             </div>
           </div>
@@ -172,12 +171,11 @@ export default function OptimizedHeader() {
             <div className="flex items-center">
               <Button
                 size="sm"
-                className="btn-primary text-xs px-3 py-2 h-9 whitespace-nowrap text-white font-bold rounded-xl shadow-lg border border-white/20"
-                asChild
+                className="btn-primary text-xs md:text-xl px-8 md:px-12 py-4 md:py-6 text-white font-bold rounded-xl shadow-lg border border-white/20"
               >
                 <Link href="#consulta" className="inline-flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  ASESORÍA
+                  <Calendar className="w-5 md:w-6 h-5 md:h-6" />
+                  ASESORÍA GRATUITA
                 </Link>
               </Button>
             </div>

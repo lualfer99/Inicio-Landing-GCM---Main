@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Check, Send, Gift, Headphones, Calendar, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default function ServicesSection() {
   const services = [
@@ -139,8 +140,10 @@ export default function ServicesSection() {
               size="lg"
               className="btn-primary text-lg md:text-xl px-8 md:px-12 py-4 md:py-6 text-white font-bold rounded-2xl"
             >
-              <Calendar className="w-5 md:w-6 h-5 md:h-6" />
-              ASESORÍA FISCAL GRATUITA
+              <Link href="#consulta" className="inline-flex items-center gap-1">
+                <Calendar className="w-5 md:w-6 h-5 md:h-6" />
+                ASESORÍA FISCAL GRATUITA
+              </Link>
             </Button>
             <p className="text-sm text-gray-500 mt-4">
               ⚡ Sin compromiso • 🔒 Consulta confidencial • 📞 Respuesta inmediata

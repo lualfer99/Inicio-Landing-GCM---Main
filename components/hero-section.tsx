@@ -51,7 +51,7 @@ export default function HeroSection() {
             Si vendes servicios digitales
           </h2>
 
-          <p className="text-lg md:text-xl lg:text-2xl text-gray-600 mb-12 max-w-4xl mx-auto leading-relaxed">
+          <p className="text-md md:text-xl lg:text-xl text-gray-600 mb-12 max-w-5xl mx-auto leading-relaxed">
             En GCM, ayudamos a cientos de empresarios digitales como tú a{" "}
             <span className="text-blue-600 font-semibold">optimizarse fiscalmente</span> aprovechando las ventajas de
             crear una LLC en EE.UU.
