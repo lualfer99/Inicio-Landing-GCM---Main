@@ -2,13 +2,13 @@ import type { Metadata } from "next"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
 import GestoriaHeroSection from "@/components/gestoria-hero-section"
-import GestoriaStatsSection from "@/components/gestoria-stats-section"
-import GestoriaTestimonialsSection from "@/components/gestoria-testimonials-section"
 import GestoriaServicesSection from "@/components/gestoria-services-section"
 import GestoriaFullServiceSection from "@/components/gestoria-full-service-section"
-import GestoriaProcessSection from "@/components/gestoria-process-section"
-import GestoriaFAQSection from "@/components/gestoria-faq-section"
 import ConsultationSection from "@/components/consultation-section"
+import StatsSection from "@/components/stats-section"
+import OptimizedTestimonialsSection from "@/components/optimized-testimonials-section"
+import ProcessSection from "@/components/process-section"
+import FAQSection from "@/components/faq-section"
 
 export const metadata: Metadata = {
   title: "Gestoría para LLCs | GCMAsesores.io - Gestión Fiscal Completa",
@@ -32,12 +32,12 @@ export default function GestoriaParaLLCsPage() {
       <Header />
       <main>
         <GestoriaHeroSection />
-        <GestoriaStatsSection />
-        <GestoriaTestimonialsSection />
+        <StatsSection />
+        <OptimizedTestimonialsSection />
         <GestoriaServicesSection />
         <GestoriaFullServiceSection />
-        <GestoriaProcessSection />
-        <GestoriaFAQSection />
+        <ProcessSection />
+        <FAQSection />
         <ConsultationSection />
       </main>
       <Footer />
