@@ -1,8 +1,22 @@
 import { Check, Send, Gift, Headphones, Zap, Calendar } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { useEffect, useState } from "react"
 
 export default function ServicesSection() {
+  const [isVisible, setIsVisible] = useState(false)
+
+  useEffect(() => {
+    setIsVisible(true)
+  }, [])
+
+  const handleCTAClick = () => {
+    const element = document.querySelector("#consulta")
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" })
+    }
+  }
+
   const services = [
     {
       text: "Creación de la LLC en el estado más conveniente para tu actividad.",
@@ -144,13 +158,11 @@ export default function ServicesSection() {
           </p>
           <Button
             size="lg"
-            className="btn-primary text-lg md:text-xl px-8 md:px-12 py-4 md:py-6 text-white font-bold rounded-2xl"
-            asChild
+            className="btn-primary text-xs md:text-xl px-8 md:px-12 py-4 md:py-6 text-white font-bold rounded-xl shadow-lg border border-white/20"
+            onClick={handleCTAClick}
           >
-            <Link href="#consulta" className="inline-flex items-center gap-3">
-              <Calendar className="w-5 md:w-6 h-5 md:h-6" />
-              ASESORÍA FISCAL GRATUITA
-            </Link>
+            <Calendar className="w-5 md:w-6 h-5 md:h-6" />
+            ASESORÍA FISCAL GRATUITA
           </Button>
           <p className="text-sm text-gray-500 mt-4">
             ⚡ Sin compromiso • 🔒 Consulta confidencial • 📞 Respuesta inmediata

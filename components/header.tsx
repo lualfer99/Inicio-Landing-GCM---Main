@@ -16,7 +16,6 @@ export default function Header() {
     { name: "Crear LLC", href: "#creacion-llc" },
     { name: "Gestoría para LLCs", href: "/gestoria-para-llcs" },
     { name: "Sobre nosotros", href: "#sobre-nosotros" },
-    { name: "Blog", href: "#blog" },
   ]
 
   const handleNavClick = (href: string) => {
@@ -80,10 +79,7 @@ export default function Header() {
             >
               <Link
                 href="#consulta"
-                onClick={(e) => {
-                  e.preventDefault()
-                  handleNavClick("#consulta")
-                }}
+                onClick={() => handleNavClick("#consulta")}
               >
                 AGENDAR ASESORÍA GRATUITA
               </Link>
@@ -163,10 +159,7 @@ export default function Header() {
           >
             <Link
               href="#consulta"
-              onClick={(e) => {
-                e.preventDefault()
-                handleNavClick("#consulta")
-              }}
+              onClick={() => handleNavClick("#consulta")}
             >
               ASESORÍA
             </Link>

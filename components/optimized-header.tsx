@@ -100,11 +100,10 @@ export default function OptimizedHeader() {
               <Button
                   size="sm"
                   className="btn-primary text-xs md:text-xl px-8 md:px-12 py-4 md:py-6 text-white font-bold rounded-xl shadow-lg border border-white/20"
+                  onClick={() => handleNavClick("#consulta")}
                 >
-                  <Link href="#consulta" className="inline-flex items-center gap-1">
-                    <Calendar className="w-5 md:w-6 h-5 md:h-6" />
-                    AGENDAR ASESORÍA GRATUITA
-                  </Link>
+                  <Calendar className="w-5 md:w-6 h-5 md:h-6" />
+                  AGENDAR ASESORÍA GRATUITA
               </Button>
             </div>
           </div>
@@ -119,6 +118,7 @@ export default function OptimizedHeader() {
                     variant="ghost"
                     size="icon"
                     className="hover:bg-white/50 p-2 rounded-xl backdrop-blur-sm border border-white/20 shadow-md"
+                    onClick={() => handleNavClick("#consulta")}
                   >
                     {isOpen ? <X className="h-6 w-6 text-gray-700" /> : <Menu className="h-6 w-6 text-gray-700" />}
                   </Button>
@@ -144,16 +144,11 @@ export default function OptimizedHeader() {
                     <Button
                       size="lg"
                       className="btn-primary mt-8 text-base px-6 py-4 text-white font-bold rounded-2xl shadow-2xl border-2 border-white/20"
+                      onClick={() => handleNavClick("#consulta")}
                       asChild
                     >
-                      <Link
-                        href="#consulta"
-                        onClick={() => setIsOpen(false)}
-                        className="inline-flex items-center justify-center gap-2"
-                      >
-                        <Calendar className="w-5 h-5" />
-                        AGENDAR ASESORÍA
-                      </Link>
+                      <Calendar className="w-5 h-5" />
+                      AGENDAR ASESORÍA
                     </Button>
                   </nav>
                 </SheetContent>
@@ -183,11 +178,10 @@ export default function OptimizedHeader() {
               <Button
                 size="sm"
                 className="btn-primary text-xs md:text-xl px-8 md:px-12 py-4 md:py-6 text-white font-bold rounded-xl shadow-lg border border-white/20"
+                onClick={() => handleNavClick("#consulta")}
               >
-                <Link href="#consulta" className="inline-flex items-center gap-1">
-                  <Calendar className="w-5 md:w-6 h-5 md:h-6" />
-                  ASESORÍA GRATUITA
-                </Link>
+                <Calendar className="w-5 md:w-6 h-5 md:h-6" />
+                ASESORÍA GRATUITA
               </Button>
             </div>
           </div>
