@@ -102,6 +102,14 @@ export default function FAQSection() {
         </>
       ),
     },
+    {
+      question: "¿Cuánto cuesta mantener una LLC?",
+      answer: (
+        <>
+          Una LLC puede llegar a ser muy <strong>barata</strong> de <strong>mantener</strong>, tan solo tendrás que pagar el <strong>mail</strong> box con la <strong>dirección</strong> de tu empresa y el nº de teléfono americáno, pudiendo hacerlo por entre 10 y 20 euros mensuales, aunque depende del tipo de empresa y del volumen de ventas de tu negocio.
+        </>
+      ),
+    },
   ]
 
   return (
