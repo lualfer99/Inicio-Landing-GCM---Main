@@ -1,19 +1,18 @@
 import type { MetadataRoute } from "next"
-import { supabase } from "@/lib/supabase-blog"
+import { supabase } from "@/lib/supabase"
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://gcmasesores.io"
 
   // Get published blog posts
-  const { data: posts } = await supabase.from("blog_posts").select("slug, updated_at").eq("published", true)
+  const { data: posts } = await supabase.from("posts").select("slug, updated_at").eq("published", true)
 
-  const blogPosts =
-    posts?.map((post) => ({
-      url: `${baseUrl}/blog/${post.slug}`,
-      lastModified: new Date(post.updated_at),
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
-    })) || []
+  const blogPosts = (posts || []).map((post) => ({
+    url: `${baseUrl}/blog/${post.slug}`,
+    lastModified: new Date(post.updated_at),
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }))
 
   return [
     {

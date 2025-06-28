@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, type KeyboardEvent } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { X, Plus } from "lucide-react"
@@ -28,7 +28,7 @@ export function KeywordsInput({ value, onChange, placeholder }: KeywordsInputPro
     onChange(value.filter((_, i) => i !== index))
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault()
       addKeyword()
@@ -36,18 +36,19 @@ export function KeywordsInput({ value, onChange, placeholder }: KeywordsInputPro
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value
-    if (val.includes(",")) {
-      const keywords = val
+    const newValue = e.target.value
+    if (newValue.includes(",")) {
+      const keywords = newValue
         .split(",")
         .map((k) => k.trim())
-        .filter((k) => k && !value.includes(k))
-      if (keywords.length > 0) {
-        onChange([...value, ...keywords])
-        setInputValue("")
+        .filter(Boolean)
+      const newKeywords = keywords.filter((k) => !value.includes(k))
+      if (newKeywords.length > 0) {
+        onChange([...value, ...newKeywords])
       }
+      setInputValue("")
     } else {
-      setInputValue(val)
+      setInputValue(newValue)
     }
   }
 
@@ -58,15 +59,16 @@ export function KeywordsInput({ value, onChange, placeholder }: KeywordsInputPro
           value={inputValue}
           onChange={handleInputChange}
           onKeyPress={handleKeyPress}
-          placeholder={placeholder || "Add keyword and press Enter"}
+          placeholder={placeholder || "Add keyword..."}
           className="flex-1"
         />
         <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={addKeyword}
           disabled={!inputValue.trim()}
-          size="sm"
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-blue-600 text-white hover:bg-blue-700"
         >
           <Plus className="h-4 w-4" />
         </Button>
@@ -80,19 +82,21 @@ export function KeywordsInput({ value, onChange, placeholder }: KeywordsInputPro
               className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
             >
               {keyword}
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => removeKeyword(index)}
-                className="hover:bg-blue-200 rounded-full p-0.5"
+                className="h-4 w-4 p-0 hover:bg-blue-200 rounded-full"
               >
                 <X className="h-3 w-3" />
-              </button>
+              </Button>
             </span>
           ))}
         </div>
       )}
 
-      <p className="text-xs text-gray-500">Separate keywords with commas or press Enter to add</p>
+      <p className="text-xs text-gray-500">Press Enter or comma to add keywords. Click × to remove.</p>
     </div>
   )
 }

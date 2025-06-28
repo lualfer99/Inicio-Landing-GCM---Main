@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useCallback } from "react"
-import { useDropzone } from "react-dropzone"
+import type React from "react"
+
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { uploadBlogImage, deleteBlogImage } from "@/lib/supabase-blog"
-import { X, ImageIcon } from "lucide-react"
+import { Upload, X, ImageIcon } from "lucide-react"
 import Image from "next/image"
 
 interface ImageUploadProps {
@@ -14,65 +15,71 @@ interface ImageUploadProps {
 
 export function ImageUpload({ value, onChange }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [dragActive, setDragActive] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const onDrop = useCallback(
-    async (acceptedFiles: File[]) => {
-      const file = acceptedFiles[0]
-      if (!file) return
+  const handleFileSelect = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file")
+      return
+    }
 
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        setUploadError("Please select an image file")
-        return
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size must be less than 5MB")
+      return
+    }
+
+    setIsUploading(true)
+
+    try {
+      const result = await uploadBlogImage(file)
+      if (result.url) {
+        onChange(result.url)
+      } else {
+        alert(result.error || "Upload failed")
       }
+    } catch (error) {
+      console.error("Upload error:", error)
+      alert("Upload failed")
+    } finally {
+      setIsUploading(false)
+    }
+  }
 
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setUploadError("File size must be less than 5MB")
-        return
-      }
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      handleFileSelect(file)
+    }
+  }
 
-      setIsUploading(true)
-      setUploadError(null)
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragActive(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) {
+      handleFileSelect(file)
+    }
+  }
 
-      try {
-        const { url, error } = await uploadBlogImage(file)
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragActive(true)
+  }
 
-        if (error) {
-          setUploadError(error)
-        } else if (url) {
-          onChange(url)
-        }
-      } catch (error) {
-        setUploadError("Upload failed. Please try again.")
-      } finally {
-        setIsUploading(false)
-      }
-    },
-    [onChange],
-  )
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"],
-    },
-    maxFiles: 1,
-    disabled: isUploading,
-  })
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragActive(false)
+  }
 
   const handleRemove = async () => {
     if (value) {
-      setIsUploading(true)
       try {
         await deleteBlogImage(value)
-        onChange(null)
       } catch (error) {
-        console.error("Error deleting image:", error)
-      } finally {
-        setIsUploading(false)
+        console.error("Delete error:", error)
       }
+      onChange(null)
     }
   }
 
@@ -83,23 +90,25 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
           <Image
             src={value || "/placeholder.svg"}
             alt="Uploaded image"
-            width={400}
+            width={300}
             height={200}
             className="w-full h-48 object-cover rounded-lg border"
           />
           <Button
+            type="button"
             variant="destructive"
             size="sm"
             onClick={handleRemove}
-            disabled={isUploading}
             className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <Button variant="outline" onClick={() => onChange(null)} disabled={isUploading} className="w-full">
+        <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full">
+          <Upload className="mr-2 h-4 w-4" />
           Change Image
         </Button>
+        <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileInput} className="hidden" />
       </div>
     )
   }
@@ -107,29 +116,22 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
   return (
     <div className="space-y-4">
       <div
-        {...getRootProps()}
-        className={`
-          border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-          ${isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"}
-          ${isUploading ? "opacity-50 cursor-not-allowed" : ""}
-        `}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+          dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
+        }`}
       >
-        <input {...getInputProps()} />
-        <div className="flex flex-col items-center gap-4">
-          {isUploading ? (
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          ) : (
-            <ImageIcon className="h-12 w-12 text-gray-400" />
-          )}
-          <div>
-            <p className="text-lg font-medium text-gray-900">{isUploading ? "Uploading..." : "Upload an image"}</p>
-            <p className="text-sm text-gray-500">Drag and drop or click to select</p>
-            <p className="text-xs text-gray-400 mt-1">PNG, JPG, GIF up to 5MB</p>
-          </div>
-        </div>
+        <ImageIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+        <p className="text-sm text-gray-600 mb-4">Drag and drop an image here, or click to select</p>
+        <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+          <Upload className="mr-2 h-4 w-4" />
+          {isUploading ? "Uploading..." : "Select Image"}
+        </Button>
       </div>
-
-      {uploadError && <p className="text-red-600 text-sm">{uploadError}</p>}
+      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileInput} className="hidden" />
+      <p className="text-xs text-gray-500">Supported formats: JPG, PNG, GIF. Max size: 5MB</p>
     </div>
   )
 }
