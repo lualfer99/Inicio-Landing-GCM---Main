@@ -1,12 +1,11 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useCallback } from "react"
+import { useDropzone } from "react-dropzone"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { uploadBlogImage, deleteBlogImage } from "@/lib/s3-storage"
-import { Upload, X, ImageIcon } from "lucide-react"
+import { S3Storage } from "@/lib/s3-storage"
+import { Upload, X, ImageIcon, Loader2 } from "lucide-react"
 import Image from "next/image"
 
 interface MediaLibraryProps {
@@ -16,57 +15,74 @@ interface MediaLibraryProps {
 }
 
 export function MediaLibrary({ selectedImages, onImagesChange, multiple = false }: MediaLibraryProps) {
-  const [isUploading, setIsUploading] = useState(false)
-  const [dragActive, setDragActive] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({})
 
-  const handleFileUpload = async (files: FileList) => {
-    if (!files.length) return
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      if (!multiple && acceptedFiles.length > 1) {
+        alert("Only one image allowed")
+        return
+      }
 
-    setIsUploading(true)
-    try {
-      const uploadPromises = Array.from(files).map((file) => uploadBlogImage(file))
-      const uploadedUrls = await Promise.all(uploadPromises)
+      setUploading(true)
+      const newImages: string[] = []
+
+      for (const file of acceptedFiles) {
+        try {
+          setUploadProgress((prev) => ({ ...prev, [file.name]: 0 }))
+
+          // Simulate upload progress
+          const progressInterval = setInterval(() => {
+            setUploadProgress((prev) => ({
+              ...prev,
+              [file.name]: Math.min((prev[file.name] || 0) + 10, 90),
+            }))
+          }, 100)
+
+          const result = await S3Storage.uploadFile(file, "blog")
+
+          clearInterval(progressInterval)
+          setUploadProgress((prev) => ({ ...prev, [file.name]: 100 }))
+
+          if (result.success && result.url) {
+            newImages.push(result.url)
+          } else {
+            alert(`Failed to upload ${file.name}: ${result.error}`)
+          }
+        } catch (error) {
+          console.error("Upload error:", error)
+          alert(`Failed to upload ${file.name}`)
+        }
+      }
 
       if (multiple) {
-        onImagesChange([...selectedImages, ...uploadedUrls])
+        onImagesChange([...selectedImages, ...newImages])
       } else {
-        onImagesChange(uploadedUrls)
+        onImagesChange(newImages)
       }
-    } catch (error) {
-      console.error("Upload failed:", error)
-      alert("Upload failed. Please try again.")
-    } finally {
-      setIsUploading(false)
-    }
-  }
 
-  const handleDrag = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true)
-    } else if (e.type === "dragleave") {
-      setDragActive(false)
-    }
-  }, [])
+      setUploading(false)
+      setUploadProgress({})
+    },
+    [selectedImages, onImagesChange, multiple],
+  )
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileUpload(e.dataTransfer.files)
-    }
-  }, [])
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"],
+    },
+    multiple,
+  })
 
   const removeImage = async (imageUrl: string) => {
     try {
-      await deleteBlogImage(imageUrl)
+      await S3Storage.deleteFile(imageUrl)
       onImagesChange(selectedImages.filter((url) => url !== imageUrl))
     } catch (error) {
-      console.error("Delete failed:", error)
-      // Still remove from UI even if S3 delete fails
+      console.error("Error removing image:", error)
+      // Remove from UI even if S3 deletion fails
       onImagesChange(selectedImages.filter((url) => url !== imageUrl))
     }
   }
@@ -74,70 +90,67 @@ export function MediaLibrary({ selectedImages, onImagesChange, multiple = false 
   return (
     <div className="space-y-4">
       {/* Upload Area */}
-      <Card
-        className={`border-2 border-dashed transition-colors ${
-          dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
-        }`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        <CardContent className="p-6 text-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="p-4 bg-gray-100 rounded-full">
-              <Upload className="h-8 w-8 text-gray-600" />
+      <Card>
+        <CardContent className="p-6">
+          <div
+            {...getRootProps()}
+            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+              isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"
+            }`}
+          >
+            <input {...getInputProps()} />
+            <div className="flex flex-col items-center gap-4">
+              <Upload className="h-12 w-12 text-gray-400" />
+              <div>
+                <p className="text-lg font-medium text-gray-900">
+                  {isDragActive ? "Drop images here" : "Upload images"}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Drag & drop or click to select {multiple ? "images" : "an image"}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">Supports: JPEG, PNG, GIF, WebP</p>
+              </div>
             </div>
-            <div>
-              <p className="text-lg font-medium text-gray-900">{multiple ? "Upload Images" : "Upload Image"}</p>
-              <p className="text-sm text-gray-500">Drag and drop files here, or click to select</p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isUploading}
-              onClick={() => {
-                const input = document.createElement("input")
-                input.type = "file"
-                input.accept = "image/*"
-                input.multiple = multiple
-                input.onchange = (e) => {
-                  const files = (e.target as HTMLInputElement).files
-                  if (files) handleFileUpload(files)
-                }
-                input.click()
-              }}
-            >
-              {isUploading ? "Uploading..." : "Select Files"}
-            </Button>
           </div>
+
+          {/* Upload Progress */}
+          {uploading && (
+            <div className="mt-4 space-y-2">
+              {Object.entries(uploadProgress).map(([filename, progress]) => (
+                <div key={filename} className="flex items-center gap-3">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm text-gray-600 flex-1">{filename}</span>
+                  <span className="text-sm text-gray-500">{progress}%</span>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Selected Images */}
       {selectedImages.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="font-medium text-gray-900">Selected Images</h4>
-          <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-3">
+          <h4 className="font-medium text-gray-900">Selected Images ({selectedImages.length})</h4>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {selectedImages.map((imageUrl, index) => (
               <div key={index} className="relative group">
-                <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
                   <Image
                     src={imageUrl || "/placeholder.svg"}
                     alt={`Selected image ${index + 1}`}
                     width={200}
-                    height={120}
+                    height={200}
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <Button
-                  type="button"
                   variant="destructive"
                   size="sm"
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={() => removeImage(imageUrl)}
+                  className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3 w-3" />
                 </Button>
               </div>
             ))}
@@ -147,7 +160,7 @@ export function MediaLibrary({ selectedImages, onImagesChange, multiple = false 
 
       {selectedImages.length === 0 && (
         <div className="text-center py-8 text-gray-500">
-          <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+          <ImageIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
           <p>No images selected</p>
         </div>
       )}

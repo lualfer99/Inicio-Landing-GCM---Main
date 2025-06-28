@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Bold,
@@ -23,16 +23,14 @@ interface WysiwygEditorProps {
   placeholder?: string
 }
 
-export function WysiwygEditor({ value, onChange, placeholder }: WysiwygEditorProps) {
+export function WysiwygEditor({ value, onChange, placeholder = "Start writing..." }: WysiwygEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null)
-  const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
-    if (editorRef.current && !isInitialized) {
+    if (editorRef.current && editorRef.current.innerHTML !== value) {
       editorRef.current.innerHTML = value
-      setIsInitialized(true)
     }
-  }, [value, isInitialized])
+  }, [value])
 
   const handleInput = () => {
     if (editorRef.current) {
@@ -68,25 +66,31 @@ export function WysiwygEditor({ value, onChange, placeholder }: WysiwygEditorPro
     <div className="border border-gray-300 rounded-lg overflow-hidden">
       {/* Toolbar */}
       <div className="bg-gray-50 border-b border-gray-300 p-2 flex flex-wrap gap-1">
-        <Button type="button" variant="ghost" size="sm" onClick={() => insertHeading(1)} className="h-8 px-2">
+        <Button type="button" variant="ghost" size="sm" onClick={() => insertHeading(1)} className="h-8 w-8 p-0">
           <Heading1 className="h-4 w-4" />
         </Button>
-        <Button type="button" variant="ghost" size="sm" onClick={() => insertHeading(2)} className="h-8 px-2">
+        <Button type="button" variant="ghost" size="sm" onClick={() => insertHeading(2)} className="h-8 w-8 p-0">
           <Heading2 className="h-4 w-4" />
         </Button>
-        <Button type="button" variant="ghost" size="sm" onClick={() => insertHeading(3)} className="h-8 px-2">
+        <Button type="button" variant="ghost" size="sm" onClick={() => insertHeading(3)} className="h-8 w-8 p-0">
           <Heading3 className="h-4 w-4" />
         </Button>
 
         <div className="w-px h-6 bg-gray-300 mx-1" />
 
-        <Button type="button" variant="ghost" size="sm" onClick={() => execCommand("bold")} className="h-8 px-2">
+        <Button type="button" variant="ghost" size="sm" onClick={() => execCommand("bold")} className="h-8 w-8 p-0">
           <Bold className="h-4 w-4" />
         </Button>
-        <Button type="button" variant="ghost" size="sm" onClick={() => execCommand("italic")} className="h-8 px-2">
+        <Button type="button" variant="ghost" size="sm" onClick={() => execCommand("italic")} className="h-8 w-8 p-0">
           <Italic className="h-4 w-4" />
         </Button>
-        <Button type="button" variant="ghost" size="sm" onClick={() => execCommand("underline")} className="h-8 px-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => execCommand("underline")}
+          className="h-8 w-8 p-0"
+        >
           <Underline className="h-4 w-4" />
         </Button>
 
@@ -97,7 +101,7 @@ export function WysiwygEditor({ value, onChange, placeholder }: WysiwygEditorPro
           variant="ghost"
           size="sm"
           onClick={() => execCommand("insertUnorderedList")}
-          className="h-8 px-2"
+          className="h-8 w-8 p-0"
         >
           <List className="h-4 w-4" />
         </Button>
@@ -106,17 +110,17 @@ export function WysiwygEditor({ value, onChange, placeholder }: WysiwygEditorPro
           variant="ghost"
           size="sm"
           onClick={() => execCommand("insertOrderedList")}
-          className="h-8 px-2"
+          className="h-8 w-8 p-0"
         >
           <ListOrdered className="h-4 w-4" />
         </Button>
 
         <div className="w-px h-6 bg-gray-300 mx-1" />
 
-        <Button type="button" variant="ghost" size="sm" onClick={insertLink} className="h-8 px-2">
+        <Button type="button" variant="ghost" size="sm" onClick={insertLink} className="h-8 w-8 p-0">
           <Link className="h-4 w-4" />
         </Button>
-        <Button type="button" variant="ghost" size="sm" onClick={insertImage} className="h-8 px-2">
+        <Button type="button" variant="ghost" size="sm" onClick={insertImage} className="h-8 w-8 p-0">
           <ImageIcon className="h-4 w-4" />
         </Button>
         <Button
@@ -124,7 +128,7 @@ export function WysiwygEditor({ value, onChange, placeholder }: WysiwygEditorPro
           variant="ghost"
           size="sm"
           onClick={() => execCommand("formatBlock", "blockquote")}
-          className="h-8 px-2"
+          className="h-8 w-8 p-0"
         >
           <Quote className="h-4 w-4" />
         </Button>
@@ -133,7 +137,7 @@ export function WysiwygEditor({ value, onChange, placeholder }: WysiwygEditorPro
           variant="ghost"
           size="sm"
           onClick={() => execCommand("formatBlock", "pre")}
-          className="h-8 px-2"
+          className="h-8 w-8 p-0"
         >
           <Code className="h-4 w-4" />
         </Button>

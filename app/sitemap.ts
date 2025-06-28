@@ -1,63 +1,65 @@
-import { supabase } from "@/lib/supabase"
 import type { MetadataRoute } from "next"
+import { BlogDatabase } from "@/lib/supabase"
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://gcmasesores.io"
 
-  // Get all published blog posts
-  const { data: posts } = await supabase.from("posts").select("slug, updated_at").eq("published", true)
+  // Get all published posts
+  const posts = await BlogDatabase.getPosts()
 
-  const blogPosts =
-    posts?.map((post) => ({
-      url: `${baseUrl}/blog/${post.slug}`,
-      lastModified: new Date(post.updated_at),
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
-    })) || []
-
-  return [
+  // Static pages
+  const staticPages = [
     {
       url: baseUrl,
       lastModified: new Date(),
-      changeFrequency: "daily",
+      changeFrequency: "monthly" as const,
       priority: 1,
     },
     {
       url: `${baseUrl}/blog`,
       lastModified: new Date(),
-      changeFrequency: "daily",
+      changeFrequency: "weekly" as const,
       priority: 0.8,
     },
-    ...blogPosts,
     {
       url: `${baseUrl}/gestoria-para-llcs`,
       lastModified: new Date(),
-      changeFrequency: "weekly",
+      changeFrequency: "monthly" as const,
       priority: 0.9,
     },
     {
       url: `${baseUrl}/politica-privacidad`,
       lastModified: new Date(),
-      changeFrequency: "monthly",
+      changeFrequency: "yearly" as const,
       priority: 0.3,
     },
     {
       url: `${baseUrl}/politica-de-cookies`,
       lastModified: new Date(),
-      changeFrequency: "monthly",
+      changeFrequency: "yearly" as const,
       priority: 0.3,
     },
     {
       url: `${baseUrl}/aviso-legal`,
       lastModified: new Date(),
-      changeFrequency: "monthly",
+      changeFrequency: "yearly" as const,
       priority: 0.3,
     },
     {
       url: `${baseUrl}/descargo-de-responsabilidad`,
       lastModified: new Date(),
-      changeFrequency: "monthly",
+      changeFrequency: "yearly" as const,
       priority: 0.3,
     },
   ]
+
+  // Blog post pages
+  const blogPages = posts.map((post) => ({
+    url: `${baseUrl}/blog/${post.slug}`,
+    lastModified: new Date(post.updated_at),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }))
+
+  return [...staticPages, ...blogPages]
 }

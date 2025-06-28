@@ -1,4 +1,11 @@
-import { supabase, type BlogUser } from "./supabase"
+import { BlogDatabase, type BlogUser } from "./supabase"
+
+// Simple password verification for demo purposes
+// In production, use proper bcrypt verification on server-side
+const DEMO_PASSWORDS = {
+  "info@gcmasesores.io": "GCMAsesores2025@!*",
+  "editor@gcmasesores.io": "Editor2025@!*",
+}
 
 export async function loginUser(
   email: string,
@@ -10,34 +17,24 @@ export async function loginUser(
 }> {
   try {
     // Get user from database
-    const { data: user, error } = await supabase.from("blog_users").select("*").eq("email", email).single()
+    const user = await BlogDatabase.getUserByEmail(email)
 
-    if (error || !user) {
+    if (!user) {
       return { success: false, error: "Invalid credentials" }
     }
 
-    // Check if password_hash exists
-    if (!user.password_hash) {
-      return { success: false, error: "Account not properly configured" }
-    }
-
-    // Simple password verification for client-side compatibility
-    let isValid = false
-
-    // Check for the specific passwords we know
-    if (email === "info@gcmasesores.io" && password === "GCMAsesores2025@!*") {
-      isValid = user.password_hash === "$2b$12$8K9wE2nZvQxJ5mP3rL6uO.YtGjHfBqWxS4vC1nM7kP9qR2sT8uV6w"
-    } else if (email === "editor@gcmasesores.io" && password === "Editor2025@!*") {
-      isValid = user.password_hash === "$2b$12$7J8vD1mYuPwI4lO2qK5tN.XsGiFgCpVwR3uB0mL6jO8pQ1rS7tU5v"
-    }
-
-    if (!isValid) {
+    // Verify password (demo implementation)
+    const expectedPassword = DEMO_PASSWORDS[email as keyof typeof DEMO_PASSWORDS]
+    if (!expectedPassword || password !== expectedPassword) {
       return { success: false, error: "Invalid credentials" }
     }
 
-    // Return user without password hash
-    const { password_hash, ...userWithoutPassword } = user
-    return { success: true, user: userWithoutPassword }
+    // Check if user has admin/editor access
+    if (!BlogDatabase.hasAdminAccess(user.role)) {
+      return { success: false, error: "Access denied. Admin or Editor role required." }
+    }
+
+    return { success: true, user }
   } catch (error) {
     console.error("Login error:", error)
     return { success: false, error: "Login failed" }
@@ -55,8 +52,26 @@ export function getCurrentUser(): BlogUser | null {
   return userStr ? JSON.parse(userStr) : null
 }
 
+export function hasAdminAccess(user: BlogUser | null): boolean {
+  return user ? BlogDatabase.hasAdminAccess(user.role) : false
+}
+
 export function logout(): void {
   if (typeof window !== "undefined") {
     localStorage.removeItem("blog_user")
   }
+}
+
+// Role-based authorization middleware
+export function requireAuth(requiredRole?: "admin" | "editor"): boolean {
+  const user = getCurrentUser()
+
+  if (!user) return false
+
+  if (requiredRole) {
+    if (requiredRole === "admin" && user.role !== "admin") return false
+    if (requiredRole === "editor" && !["admin", "editor"].includes(user.role)) return false
+  }
+
+  return true
 }

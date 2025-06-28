@@ -9,25 +9,22 @@ interface KeywordsInputProps {
   value: string[]
   onChange: (keywords: string[]) => void
   placeholder?: string
+  maxKeywords?: number
 }
 
-export function KeywordsInput({ value, onChange, placeholder = "Add keywords..." }: KeywordsInputProps) {
+export function KeywordsInput({
+  value,
+  onChange,
+  placeholder = "Add keywords...",
+  maxKeywords = 10,
+}: KeywordsInputProps) {
   const [inputValue, setInputValue] = useState("")
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault()
-      addKeyword()
-    } else if (e.key === "Backspace" && inputValue === "" && value.length > 0) {
-      // Remove last keyword if input is empty and backspace is pressed
-      onChange(value.slice(0, -1))
-    }
-  }
+  const addKeyword = (keyword: string) => {
+    const trimmedKeyword = keyword.trim().toLowerCase()
 
-  const addKeyword = () => {
-    const keyword = inputValue.trim().toLowerCase()
-    if (keyword && !value.includes(keyword)) {
-      onChange([...value, keyword])
+    if (trimmedKeyword && !value.includes(trimmedKeyword) && value.length < maxKeywords) {
+      onChange([...value, trimmedKeyword])
       setInputValue("")
     }
   }
@@ -36,14 +33,30 @@ export function KeywordsInput({ value, onChange, placeholder = "Add keywords..."
     onChange(value.filter((keyword) => keyword !== keywordToRemove))
   }
 
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault()
+      addKeyword(inputValue)
+    } else if (e.key === "Backspace" && inputValue === "" && value.length > 0) {
+      removeKeyword(value[value.length - 1])
+    }
+  }
+
+  const handleInputBlur = () => {
+    if (inputValue.trim()) {
+      addKeyword(inputValue)
+    }
+  }
+
   return (
     <div className="space-y-3">
       <Input
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
         onKeyDown={handleKeyDown}
-        onBlur={addKeyword}
-        placeholder={placeholder}
+        onBlur={handleInputBlur}
+        placeholder={value.length >= maxKeywords ? `Max ${maxKeywords} keywords` : placeholder}
+        disabled={value.length >= maxKeywords}
         className="w-full"
       />
 
@@ -68,7 +81,9 @@ export function KeywordsInput({ value, onChange, placeholder = "Add keywords..."
         </div>
       )}
 
-      <p className="text-xs text-gray-500">Press Enter or comma to add keywords. Click × to remove.</p>
+      <p className="text-xs text-gray-500">
+        {value.length}/{maxKeywords} keywords • Press Enter or comma to add
+      </p>
     </div>
   )
 }
