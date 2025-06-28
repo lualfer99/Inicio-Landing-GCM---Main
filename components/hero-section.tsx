@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Calendar, Shield, Zap, TrendingUp } from "lucide-react"
+import { Calendar, Shield, Zap, TrendingUp, CheckCircle } from "lucide-react"
 import { useEffect, useState } from "react"
 
 export default function HeroSection() {
@@ -40,7 +40,7 @@ export default function HeroSection() {
             100% Legal y Seguro
           </div>
 
-          <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 mb-8 leading-tight">
+          <h1 className="text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 mb-8 leading-tight">
             OPTIMIZA TU FISCALIDAD DE{" "}
             <span className="text-blue-600 relative">
               MANERA 100% LEGAL
@@ -75,20 +75,21 @@ export default function HeroSection() {
           </div>
 
           {/* Features */}
-          <div className="flex flex-wrap justify-center gap-4 md:gap-6 mb-12">
-            <div className="flex items-center gap-2 bg-white px-4 md:px-6 py-3 rounded-full shadow-md border border-gray-100">
-              <Zap className="w-5 h-5 text-blue-600" />
-              <span className="font-semibold text-gray-700 text-sm md:text-base">Proceso en 7 días</span>
+          <div className="flex flex-wrap gap-4 mb-8 justify-center">
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-md border border-gray-100">
+              <Zap className="w-4 h-4 text-green-500" />
+              <span className="font-medium text-gray-700 text-sm">Proceso en 7 días</span>
             </div>
-            <div className="flex items-center gap-2 bg-white px-4 md:px-6 py-3 rounded-full shadow-md border border-gray-100">
-              <TrendingUp className="w-5 h-5 text-blue-600" />
-              <span className="font-semibold text-gray-700 text-sm md:text-base">0% Impuestos en EE.UU</span>
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-md border border-gray-100">
+              <TrendingUp className="w-4 h-4 text-green-500" />
+              <span className="font-medium text-gray-700 text-sm">0% Impuestos en EE.UU</span>
             </div>
-            <div className="flex items-center gap-2 bg-white px-4 md:px-6 py-3 rounded-full shadow-md border border-gray-100">
-              <Shield className="w-5 h-5 text-blue-600" />
-              <span className="font-semibold text-gray-700 text-sm md:text-base">100% Online</span>
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-md border border-gray-100">
+              <Shield className="w-4 h-4 text-green-500" />
+              <span className="font-medium text-gray-700 text-sm">100% Online</span>
             </div>
           </div>
+
           <div>
             <Button
               size="lg"

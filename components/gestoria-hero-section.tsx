@@ -44,7 +44,7 @@ export default function GestoriaHeroSection() {
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
+          <p className="text-md md:text-xl text-gray-600 mb-8 leading-relaxed">
             Somos tu gestoría especializada en LLCs para emprendedores digitales. Nos encargamos de todo, tanto en{" "}
             <span className="text-blue-600 font-semibold">EE.UU. como en España</span>.
           </p>
