@@ -1,7 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
-iimport { Poppins } from "next/font/google"
-mport "./globals.css"
+import { Poppins } from "next/font/google"
+import "./globals.css"
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -90,6 +90,3 @@ export default function RootLayout({
     </html>
   )
 }
-
-
-import './globals.css'
