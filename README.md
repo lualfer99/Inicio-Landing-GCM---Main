@@ -86,7 +86,7 @@ El sitio está optimizado para:
 - **Tablet**: 768px - 1199px
 - **Mobile**: 320px - 767px
 
-## 🔧 Configuración
+## ��� Configuración
 
 ### Tailwind CSS
 Configurado con:
