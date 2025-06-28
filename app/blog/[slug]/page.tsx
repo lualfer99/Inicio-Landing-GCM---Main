@@ -1,12 +1,12 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
-import { BlogDatabase, formatDate } from "@/lib/supabase"
-import { BlogHeader } from "@/components/blog/blog-header"
+import { blogDb } from "@/lib/supabase-config"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, User, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Image from "next/image"
+import { Calendar, Clock, Eye, User, ArrowLeft, Share2 } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 
 interface BlogPostPageProps {
   params: {
@@ -15,183 +15,235 @@ interface BlogPostPageProps {
 }
 
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
-  const post = await BlogDatabase.getPostBySlug(params.slug)
+  const post = await blogDb.getPostBySlug(params.slug)
 
   if (!post) {
     return {
-      title: "Post no encontrado - GCM Asesores",
+      title: "Artículo no encontrado",
     }
   }
 
   return {
-    title: `${post.title} - GCM Asesores`,
-    description: post.description || `Artículo sobre ${post.title}`,
+    title: post.title,
+    description: post.description,
     openGraph: {
       title: post.title,
-      description: post.description || `Artículo sobre ${post.title}`,
+      description: post.description,
       type: "article",
-      publishedTime: post.created_at,
-      modifiedTime: post.updated_at,
-      authors: post.blog_users ? [post.blog_users.name] : undefined,
-      images:
-        post.image_urls && post.image_urls.length > 0
-          ? [
-              {
-                url: post.image_urls[0],
-                alt: post.title,
-              },
-            ]
-          : undefined,
+      publishedTime: post.published_at || post.created_at,
+      authors: post.author ? [post.author.name] : undefined,
+      images: post.image_url ? [{ url: post.image_url }] : undefined,
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
-      description: post.description || `Artículo sobre ${post.title}`,
-      images: post.image_urls && post.image_urls.length > 0 ? [post.image_urls[0]] : undefined,
+      description: post.description,
+      images: post.image_url ? [post.image_url] : undefined,
     },
   }
 }
 
-export default async function BlogPostPage({ params }: BlogPostPageProps) {
-  const post = await BlogDatabase.getPostBySlug(params.slug)
+function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString("es-ES", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })
+}
 
-  if (!post) {
+export default async function BlogPostPage({ params }: BlogPostPageProps) {
+  const post = await blogDb.getPostBySlug(params.slug)
+
+  if (!post || !post.published) {
     notFound()
   }
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: post.title,
-    description: post.description,
-    image: post.image_urls && post.image_urls.length > 0 ? post.image_urls[0] : undefined,
-    datePublished: post.created_at,
-    dateModified: post.updated_at,
-    author: post.blog_users
-      ? {
-          "@type": "Person",
-          name: post.blog_users.name,
-        }
-      : undefined,
-    publisher: {
-      "@type": "Organization",
-      name: "GCM Asesores",
-      logo: {
-        "@type": "ImageObject",
-        url: "https://gcmasesores.io/images/logo.png",
-      },
-    },
-    mainEntityOfPage: {
-      "@type": "WebPage",
-      "@id": `https://gcmasesores.io/blog/${post.slug}`,
-    },
-  }
+  // Get related posts
+  const relatedPosts = await blogDb.getRelatedPosts(post.id, post.keywords, 3)
 
   return (
-    <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-4 py-4">
+          <Link href="/blog" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700">
+            <ArrowLeft className="w-4 h-4" />
+            Volver al blog
+          </Link>
+        </div>
+      </div>
 
-      <div className="min-h-screen bg-white">
-        <BlogHeader showBackButton={true} />
-
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {/* Back Button */}
-          <div className="mb-8">
-            <Button variant="ghost" asChild>
-              <Link href="/blog" className="flex items-center gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Volver al blog
-              </Link>
-            </Button>
-          </div>
-
-          {/* Article Header */}
-          <header className="mb-12">
-            <div className="space-y-6">
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">{post.title}</h1>
-
-              {post.description && <p className="text-xl text-gray-600 leading-relaxed">{post.description}</p>}
-
-              <div className="flex flex-wrap items-center gap-6 text-gray-500">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  <time dateTime={post.created_at}>{formatDate(post.created_at)}</time>
-                </div>
-
-                {post.blog_users && (
-                  <div className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    <span>{post.blog_users.name}</span>
-                  </div>
-                )}
-              </div>
-
-              {post.keywords && post.keywords.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {post.keywords.map((keyword, index) => (
-                    <Badge key={index} variant="secondary">
-                      {keyword}
-                    </Badge>
-                  ))}
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Main Content */}
+          <article className="lg:col-span-3">
+            <Card className="overflow-hidden">
+              {/* Featured Image */}
+              {post.image_url && (
+                <div className="relative h-64 md:h-96">
+                  <Image
+                    src={post.image_url || "/placeholder.svg"}
+                    alt={post.title}
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                  {post.featured && <Badge className="absolute top-4 left-4 bg-blue-600">Destacado</Badge>}
                 </div>
               )}
-            </div>
-          </header>
 
-          {/* Featured Image */}
-          {post.image_urls && post.image_urls.length > 0 && (
-            <div className="mb-12">
-              <div className="aspect-video relative rounded-lg overflow-hidden">
-                <Image
-                  src={post.image_urls[0] || "/placeholder.svg"}
-                  alt={post.title}
-                  fill
-                  className="object-cover"
-                  priority
+              <CardHeader className="pb-4">
+                {/* Categories */}
+                {post.category_names && post.category_names.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {post.category_names.map((category, index) => (
+                      <Badge key={category} variant="outline">
+                        {category}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                <CardTitle className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
+                  {post.title}
+                </CardTitle>
+
+                {post.description && <p className="text-xl text-gray-600 mt-4">{post.description}</p>}
+
+                {/* Meta Information */}
+                <div className="flex flex-wrap items-center gap-6 mt-6 pt-6 border-t text-sm text-gray-500">
+                  {post.author && (
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      <span>{post.author.name}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    <span>{formatDate(post.published_at || post.created_at)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    <span>{post.reading_time} min de lectura</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Eye className="w-4 h-4" />
+                    <span>{post.view_count} visualizaciones</span>
+                  </div>
+                </div>
+
+                {/* Share Button */}
+                <div className="mt-4">
+                  <Button variant="outline" size="sm" className="gap-2 bg-transparent">
+                    <Share2 className="w-4 h-4" />
+                    Compartir
+                  </Button>
+                </div>
+              </CardHeader>
+
+              <CardContent>
+                {/* Keywords */}
+                {post.keywords.length > 0 && (
+                  <div className="mb-8">
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">Palabras clave:</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {post.keywords.map((keyword) => (
+                        <Badge key={keyword} variant="secondary" className="text-xs">
+                          {keyword}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Content */}
+                <div
+                  className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 prose-strong:text-gray-900"
+                  dangerouslySetInnerHTML={{ __html: post.content }}
                 />
-              </div>
-            </div>
-          )}
 
-          {/* Article Content */}
-          <article className="prose prose-lg max-w-none">
-            <div
-              dangerouslySetInnerHTML={{ __html: post.content }}
-              className="prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 prose-strong:text-gray-900"
-            />
+                {/* Author Bio */}
+                {post.author && post.author.bio && (
+                  <div className="mt-12 p-6 bg-gray-50 rounded-lg">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Sobre el autor</h3>
+                    <div className="flex items-start gap-4">
+                      {post.author.avatar_url && (
+                        <Image
+                          src={post.author.avatar_url || "/placeholder.svg"}
+                          alt={post.author.name}
+                          width={64}
+                          height={64}
+                          className="rounded-full"
+                        />
+                      )}
+                      <div>
+                        <h4 className="font-medium text-gray-900">{post.author.name}</h4>
+                        <p className="text-gray-600 mt-1">{post.author.bio}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </article>
 
-          {/* Additional Images */}
-          {post.image_urls && post.image_urls.length > 1 && (
-            <div className="mt-12">
-              <h3 className="text-xl font-semibold text-gray-900 mb-6">Imágenes adicionales</h3>
-              <div className="grid md:grid-cols-2 gap-6">
-                {post.image_urls.slice(1).map((url, index) => (
-                  <div key={index} className="aspect-video relative rounded-lg overflow-hidden">
-                    <Image
-                      src={url || "/placeholder.svg"}
-                      alt={`${post.title} - Imagen ${index + 2}`}
-                      fill
-                      className="object-cover"
-                    />
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            {/* Related Posts */}
+            {relatedPosts.length > 0 && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="text-lg">Artículos Relacionados</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {relatedPosts.map((relatedPost) => (
+                      <Link key={relatedPost.id} href={`/blog/${relatedPost.slug}`} className="block group">
+                        <div className="flex gap-3">
+                          {relatedPost.image_url && (
+                            <div className="relative w-16 h-16 flex-shrink-0">
+                              <Image
+                                src={relatedPost.image_url || "/placeholder.svg"}
+                                alt={relatedPost.title}
+                                fill
+                                className="object-cover rounded"
+                              />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-medium text-gray-900 group-hover:text-blue-600 line-clamp-2">
+                              {relatedPost.title}
+                            </h4>
+                            <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                              <Clock className="w-3 h-3" />
+                              <span>{relatedPost.reading_time} min</span>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                </CardContent>
+              </Card>
+            )}
 
-          {/* Call to Action */}
-          <div className="mt-16 p-8 bg-blue-50 rounded-lg text-center">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">¿Necesitas ayuda con tu LLC?</h3>
-            <p className="text-gray-600 mb-6">
-              Nuestros expertos están listos para ayudarte con todos los aspectos legales y fiscales de tu empresa.
-            </p>
-            <Button asChild size="lg">
-              <Link href="/#consultation">Solicitar consulta gratuita</Link>
-            </Button>
+            {/* CTA */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">¿Necesitas ayuda?</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 mb-4">
+                  Nuestros expertos pueden ayudarte con la creación y gestión de tu LLC.
+                </p>
+                <Button className="w-full" asChild>
+                  <Link href="/#consulta">Consulta Gratuita</Link>
+                </Button>
+              </CardContent>
+            </Card>
           </div>
-        </main>
+        </div>
       </div>
-    </>
+    </div>
   )
 }

@@ -40,6 +40,38 @@ export interface BlogUser {
   updated_at: string
 }
 
+// Utility functions
+export function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove accents
+    .replace(/[^a-z0-9\s-]/g, "") // Remove special characters
+    .replace(/\s+/g, "-") // Replace spaces with hyphens
+    .replace(/-+/g, "-") // Replace multiple hyphens with single
+    .trim()
+}
+
+export function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString("es-ES", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })
+}
+
+export function extractExcerpt(content: string, maxLength = 150): string {
+  // Remove HTML tags and get plain text
+  const plainText = content.replace(/<[^>]*>/g, "")
+  return plainText.length > maxLength ? plainText.substring(0, maxLength) + "..." : plainText
+}
+
+export function calculateReadingTime(content: string): number {
+  const wordsPerMinute = 200
+  const words = content.replace(/<[^>]*>/g, "").split(/\s+/).length
+  return Math.ceil(words / wordsPerMinute)
+}
+
 export class BlogDatabase {
   private client = supabaseAdmin
 

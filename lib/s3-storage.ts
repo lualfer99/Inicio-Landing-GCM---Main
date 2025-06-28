@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3"
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 
 const s3Client = new S3Client({
@@ -11,79 +11,117 @@ const s3Client = new S3Client({
   forcePathStyle: true, // Required for Hetzner Cloud Storage
 })
 
-const BUCKET_NAME = process.env.S3_BUCKET!
-const PREFIX = process.env.S3_PREFIX || "blog/"
+const BUCKET_NAME = process.env.S3_BUCKET || "gcmasesores-blog"
+const PREFIX = process.env.S3_PREFIX || "blog-media/"
 
 export interface UploadResult {
-  url: string
+  success: boolean
+  url?: string
+  error?: string
+}
+
+export interface MediaFile {
   key: string
-  filename: string
+  url: string
+  size: number
+  lastModified: Date
+  name: string
 }
 
-export async function uploadFile(file: File, folder = "images"): Promise<UploadResult> {
-  const timestamp = Date.now()
-  const filename = `${timestamp}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`
-  const key = `${PREFIX}${folder}/${filename}`
+export class S3Storage {
+  static async uploadFile(file: File, folder = "images"): Promise<UploadResult> {
+    try {
+      const fileExtension = file.name.split(".").pop()
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`
+      const key = `${PREFIX}${folder}/${fileName}`
 
-  try {
-    const buffer = await file.arrayBuffer()
+      const command = new PutObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+        Body: file,
+        ContentType: file.type,
+        ACL: "public-read",
+      })
 
-    const command = new PutObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: key,
-      Body: new Uint8Array(buffer),
-      ContentType: file.type,
-      ACL: "public-read",
-    })
+      await s3Client.send(command)
 
-    await s3Client.send(command)
+      const url = `${process.env.S3_ENDPOINT}/${BUCKET_NAME}/${key}`
 
-    const url = `${process.env.S3_ENDPOINT}/${BUCKET_NAME}/${key}`
-
-    return {
-      url,
-      key,
-      filename: file.name,
+      return {
+        success: true,
+        url,
+      }
+    } catch (error) {
+      console.error("Upload error:", error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Upload failed",
+      }
     }
-  } catch (error) {
-    console.error("Upload error:", error)
-    throw new Error(`Failed to upload file: ${error instanceof Error ? error.message : "Unknown error"}`)
   }
-}
 
-export async function deleteFile(key: string): Promise<void> {
-  try {
-    const command = new DeleteObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: key,
-    })
+  static async deleteFile(url: string): Promise<boolean> {
+    try {
+      // Extract key from URL
+      const urlParts = url.split("/")
+      const key = urlParts.slice(-3).join("/") // Get the last 3 parts (prefix/folder/filename)
 
-    await s3Client.send(command)
-  } catch (error) {
-    console.error("Delete error:", error)
-    throw new Error(`Failed to delete file: ${error instanceof Error ? error.message : "Unknown error"}`)
+      const command = new DeleteObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+      })
+
+      await s3Client.send(command)
+      return true
+    } catch (error) {
+      console.error("Delete error:", error)
+      return false
+    }
   }
-}
 
-export async function getSignedDownloadUrl(key: string, expiresIn = 3600): Promise<string> {
-  try {
-    const command = new GetObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: key,
-    })
+  static async listFiles(folder = "images"): Promise<MediaFile[]> {
+    try {
+      const command = new ListObjectsV2Command({
+        Bucket: BUCKET_NAME,
+        Prefix: `${PREFIX}${folder}/`,
+        MaxKeys: 100,
+      })
 
-    return await getSignedUrl(s3Client, command, { expiresIn })
-  } catch (error) {
-    console.error("Signed URL error:", error)
-    throw new Error(`Failed to generate signed URL: ${error instanceof Error ? error.message : "Unknown error"}`)
+      const response = await s3Client.send(command)
+
+      if (!response.Contents) {
+        return []
+      }
+
+      return response.Contents.map((object) => ({
+        key: object.Key!,
+        url: `${process.env.S3_ENDPOINT}/${BUCKET_NAME}/${object.Key}`,
+        size: object.Size || 0,
+        lastModified: object.LastModified || new Date(),
+        name: object.Key!.split("/").pop() || "",
+      }))
+    } catch (error) {
+      console.error("List files error:", error)
+      return []
+    }
   }
-}
 
-export function getPublicUrl(key: string): string {
-  return `${process.env.S3_ENDPOINT}/${BUCKET_NAME}/${key}`
-}
+  static async getPresignedUploadUrl(fileName: string, contentType: string, folder = "images"): Promise<string | null> {
+    try {
+      const key = `${PREFIX}${folder}/${Date.now()}-${fileName}`
 
-export async function uploadMultipleFiles(files: File[], folder = "images"): Promise<UploadResult[]> {
-  const uploadPromises = files.map((file) => uploadFile(file, folder))
-  return Promise.all(uploadPromises)
+      const command = new PutObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+        ContentType: contentType,
+        ACL: "public-read",
+      })
+
+      const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 })
+      return signedUrl
+    } catch (error) {
+      console.error("Presigned URL error:", error)
+      return null
+    }
+  }
 }

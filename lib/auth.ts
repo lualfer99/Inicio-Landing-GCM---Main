@@ -1,121 +1,155 @@
+import bcrypt from "bcryptjs"
+import jwt from "jsonwebtoken"
 import { blogDb, type BlogUser } from "./supabase"
-import { cookies } from "next/headers"
-import { SignJWT, jwtVerify } from "jose"
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "your-secret-key")
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production"
 
-export interface AuthSession {
-  user: {
-    id: string
-    email: string
-    name: string
-    role: string
-  }
+export interface UserSession {
+  id: string
+  email: string
+  name: string
+  role: string
+  isActive: boolean
 }
 
-export async function hashPassword(password: string): Promise<string> {
-  // In a real application, use bcrypt or similar
-  // For demo purposes, we'll use a simple hash
-  const encoder = new TextEncoder()
-  const data = encoder.encode(password)
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("")
+export interface AuthResult {
+  success: boolean
+  user?: BlogUser
+  error?: string
 }
 
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  // Demo password verification - in production use bcrypt.compare()
-  const testHash = await hashPassword(password)
+export class AuthService {
+  static async authenticate(email: string, password: string): Promise<AuthResult> {
+    try {
+      const user = await blogDb.getUserByEmail(email)
 
-  // For demo users, check against known passwords
-  const demoPasswords: Record<string, string> = {
-    "info@gcmasesores.io": "GCMAsesores2025@!*",
-    "editor@gcmasesores.io": "Editor2025@!*",
-    "test@gcmasesores.io": "Test2025@!*",
-  }
+      if (!user) {
+        return { success: false, error: "Usuario no encontrado" }
+      }
 
-  // Check if this is a demo password
-  for (const [email, demoPassword] of Object.entries(demoPasswords)) {
-    if (password === demoPassword) {
-      return true
+      if (!user.is_active) {
+        return { success: false, error: "Usuario inactivo" }
+      }
+
+      // For demo purposes, we'll use simple password comparison
+      // In production, use proper bcrypt comparison
+      const validPassword = await this.verifyPassword(password, user.password_hash, email)
+
+      if (!validPassword) {
+        return { success: false, error: "Contraseña incorrecta" }
+      }
+
+      return { success: true, user }
+    } catch (error) {
+      console.error("Authentication error:", error)
+      return { success: false, error: "Error de autenticación" }
     }
   }
 
-  return testHash === hash
-}
+  private static async verifyPassword(password: string, hash: string, email: string): Promise<boolean> {
+    // Demo password verification - replace with proper bcrypt in production
+    const demoPasswords: Record<string, string> = {
+      "info@gcmasesores.io": "GCMAsesores2025@!*",
+      "editor@gcmasesores.io": "Editor2025@!*",
+    }
 
-export async function authenticate(email: string, password: string): Promise<BlogUser | null> {
-  try {
-    const user = await blogDb.getUserByEmail(email)
-    if (!user) {
+    if (demoPasswords[email]) {
+      return password === demoPasswords[email]
+    }
+
+    // Fallback to bcrypt for other users
+    try {
+      return await bcrypt.compare(password, hash)
+    } catch (error) {
+      console.error("Password verification error:", error)
+      return false
+    }
+  }
+
+  static generateToken(user: BlogUser): string {
+    return jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      JWT_SECRET,
+      { expiresIn: "7d" },
+    )
+  }
+
+  static verifyToken(token: string): UserSession | null {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as any
+      return {
+        id: decoded.id,
+        email: decoded.email,
+        name: decoded.name || "",
+        role: decoded.role,
+        isActive: true,
+      }
+    } catch (error) {
       return null
     }
+  }
 
-    const isValid = await verifyPassword(password, user.password_hash)
-    if (!isValid) {
-      return null
+  static hasEditorAccess(user: BlogUser): boolean {
+    return ["admin", "editor"].includes(user.role)
+  }
+
+  static hasAdminAccess(user: BlogUser): boolean {
+    return user.role === "admin"
+  }
+}
+
+export class SessionManager {
+  private static readonly SESSION_KEY = "blog_session"
+
+  static setSession(user: BlogUser): void {
+    if (typeof window !== "undefined") {
+      const session: UserSession = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        isActive: user.is_active,
+      }
+      localStorage.setItem(this.SESSION_KEY, JSON.stringify(session))
     }
+  }
 
-    return user
-  } catch (error) {
-    console.error("Authentication error:", error)
+  static getSession(): UserSession | null {
+    if (typeof window !== "undefined") {
+      const sessionData = localStorage.getItem(this.SESSION_KEY)
+      if (sessionData) {
+        try {
+          return JSON.parse(sessionData)
+        } catch (error) {
+          this.clearSession()
+          return null
+        }
+      }
+    }
     return null
   }
-}
 
-export async function createSession(user: BlogUser): Promise<string> {
-  const payload = {
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-    },
-  }
-
-  const token = await new SignJWT(payload)
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("24h")
-    .sign(JWT_SECRET)
-
-  return token
-}
-
-export async function getSession(): Promise<AuthSession | null> {
-  try {
-    const cookieStore = cookies()
-    const token = cookieStore.get("auth-token")?.value
-
-    if (!token) {
-      return null
+  static clearSession(): void {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(this.SESSION_KEY)
     }
-
-    const { payload } = await jwtVerify(token, JWT_SECRET)
-    return payload as AuthSession
-  } catch (error) {
-    console.error("Session verification error:", error)
-    return null
   }
-}
 
-export async function requireAuth(): Promise<AuthSession> {
-  const session = await getSession()
-  if (!session) {
-    throw new Error("Authentication required")
+  static isAuthenticated(): boolean {
+    return this.getSession() !== null
   }
-  return session
-}
 
-export async function requireRole(allowedRoles: string[]): Promise<AuthSession> {
-  const session = await requireAuth()
-  if (!allowedRoles.includes(session.user.role)) {
-    throw new Error("Insufficient permissions")
+  static hasEditorAccess(): boolean {
+    const session = this.getSession()
+    return session ? ["admin", "editor"].includes(session.role) : false
   }
-  return session
-}
 
-export async function logout(): Promise<void> {
-  const cookieStore = cookies()
-  cookieStore.delete("auth-token")
+  static hasAdminAccess(): boolean {
+    const session = this.getSession()
+    return session ? session.role === "admin" : false
+  }
 }

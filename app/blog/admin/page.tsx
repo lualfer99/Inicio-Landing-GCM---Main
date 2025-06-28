@@ -1,156 +1,114 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
-import { BlogHeader } from "@/components/blog/blog-header"
-import { WysiwygEditor } from "@/components/blog/wysiwyg-editor"
-import { MediaLibrary } from "@/components/blog/media-library"
-import { KeywordsInput } from "@/components/blog/keywords-input"
+import { blogDb, type BlogPost, type BlogCategory } from "@/lib/supabase-config"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Save, Eye, Trash2, Plus, Edit, Calendar, User, FileText, Settings } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
-import { BlogDatabase, generateSlug, formatDate, type Post } from "@/lib/supabase"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Plus, Edit, Trash2, Save, Eye, Calendar, Clock, Users, FileText, TrendingUp } from "lucide-react"
+import { toast } from "sonner"
+
+interface PostFormData {
+  title: string
+  slug: string
+  description: string
+  content: string
+  image_url: string
+  keywords: string
+  published: boolean
+  featured: boolean
+}
 
 export default function BlogAdminPage() {
-  const [posts, setPosts] = useState<Post[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [currentUser, setCurrentUser] = useState<any>(null)
-
-  // Form state
-  const [formData, setFormData] = useState({
-    id: "",
+  const [posts, setPosts] = useState<BlogPost[]>([])
+  const [categories, setCategories] = useState<BlogCategory[]>([])
+  const [loading, setLoading] = useState(true)
+  const [editingPost, setEditingPost] = useState<BlogPost | null>(null)
+  const [showForm, setShowForm] = useState(false)
+  const [formData, setFormData] = useState<PostFormData>({
     title: "",
     slug: "",
     description: "",
     content: "",
-    keywords: [] as string[],
+    image_url: "",
+    keywords: "",
     published: false,
     featured: false,
-    image_urls: [] as string[],
   })
 
-  const [isEditing, setIsEditing] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState("posts")
-
-  // Authentication check
   useEffect(() => {
-    const checkAuth = async () => {
-      // In a real app, you'd check session/token here
-      // For demo, we'll assume authenticated if accessing admin
-      setIsAuthenticated(true)
-      setCurrentUser({ role: "admin", name: "Admin User" })
-      setIsLoading(false)
-    }
-
-    checkAuth()
+    loadData()
   }, [])
 
-  // Load posts
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadPosts()
-    }
-  }, [isAuthenticated])
-
-  const loadPosts = async () => {
+  const loadData = async () => {
     try {
-      const data = await BlogDatabase.getPosts("admin")
-      setPosts(data)
+      setLoading(true)
+      const [postsData, categoriesData] = await Promise.all([blogDb.getPosts(), blogDb.getCategories()])
+      setPosts(postsData)
+      setCategories(categoriesData)
     } catch (error) {
-      console.error("Error loading posts:", error)
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los posts.",
-        variant: "destructive",
-      })
+      console.error("Error loading data:", error)
+      toast.error("Error al cargar los datos")
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleInputChange = (field: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
 
-    // Auto-generate slug from title
-    if (field === "title") {
-      setFormData((prev) => ({
-        ...prev,
-        slug: generateSlug(value),
-      }))
-    }
-  }
-
-  const handleSave = async () => {
-    if (!formData.title.trim() || !formData.content.trim()) {
-      toast({
-        title: "Error",
-        description: "El título y contenido son obligatorios.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setIsSaving(true)
     try {
-      if (isEditing) {
-        const result = await BlogDatabase.updatePost(formData.id, formData)
-        if (result.success) {
-          toast({
-            title: "Post actualizado",
-            description: "El post se ha actualizado correctamente.",
-          })
-        } else {
-          throw new Error(result.error)
-        }
-      } else {
-        const result = await BlogDatabase.createPost(formData, currentUser.id || "demo-user")
-        if (result.success) {
-          toast({
-            title: "Post creado",
-            description: "El post se ha creado correctamente.",
-          })
-        } else {
-          throw new Error(result.error)
-        }
+      const postData = {
+        ...formData,
+        keywords: formData.keywords
+          .split(",")
+          .map((k) => k.trim())
+          .filter(Boolean),
+        author_id: "00000000-0000-0000-0000-000000000000", // Admin user
       }
 
-      // Reset form and reload posts
-      resetForm()
-      await loadPosts()
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo guardar el post.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsSaving(false)
+      let result
+      if (editingPost) {
+        result = await blogDb.updatePost(editingPost.id, postData)
+      } else {
+        result = await blogDb.createPost(postData)
+      }
+
+      if (result.success) {
+        toast.success(editingPost ? "Post actualizado" : "Post creado")
+        setShowForm(false)
+        setEditingPost(null)
+        resetForm()
+        loadData()
+      } else {
+        toast.error(result.error || "Error al guardar el post")
+      }
+    } catch (error) {
+      console.error("Error saving post:", error)
+      toast.error("Error al guardar el post")
     }
   }
 
-  const handleEdit = (post: Post) => {
+  const handleEdit = (post: BlogPost) => {
+    setEditingPost(post)
     setFormData({
-      id: post.id,
       title: post.title,
       slug: post.slug,
       description: post.description || "",
       content: post.content,
-      keywords: post.keywords || [],
+      image_url: post.image_url || "",
+      keywords: post.keywords.join(", "),
       published: post.published,
-      featured: post.featured || false,
-      image_urls: post.image_urls || [],
+      featured: post.featured,
     })
-    setIsEditing(true)
-    setActiveTab("editor")
+    setShowForm(true)
   }
 
   const handleDelete = async (postId: string) => {
@@ -159,197 +117,122 @@ export default function BlogAdminPage() {
     }
 
     try {
-      const result = await BlogDatabase.deletePost(postId)
+      const result = await blogDb.deletePost(postId)
       if (result.success) {
-        toast({
-          title: "Post eliminado",
-          description: "El post se ha eliminado correctamente.",
-        })
-        await loadPosts()
+        toast.success("Post eliminado")
+        loadData()
       } else {
-        throw new Error(result.error)
+        toast.error(result.error || "Error al eliminar el post")
       }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo eliminar el post.",
-        variant: "destructive",
-      })
+    } catch (error) {
+      console.error("Error deleting post:", error)
+      toast.error("Error al eliminar el post")
     }
   }
 
   const resetForm = () => {
     setFormData({
-      id: "",
       title: "",
       slug: "",
       description: "",
       content: "",
-      keywords: [],
+      image_url: "",
+      keywords: "",
       published: false,
       featured: false,
-      image_urls: [],
     })
-    setIsEditing(false)
   }
 
-  const handleMediaSelect = (url: string) => {
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .trim()
+  }
+
+  const handleTitleChange = (title: string) => {
     setFormData((prev) => ({
       ...prev,
-      image_urls: [...prev.image_urls, url],
+      title,
+      slug: generateSlug(title),
     }))
   }
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando...</p>
         </div>
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Acceso restringido</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600">Necesitas permisos de administrador para acceder a esta página.</p>
-          </CardContent>
-        </Card>
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <BlogHeader title="Panel de Administración" showBackButton={true} showAdminButton={false} />
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Administración del Blog</h1>
+          <p className="text-gray-600">Gestiona los artículos y contenido del blog</p>
+        </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="posts" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Posts
-            </TabsTrigger>
-            <TabsTrigger value="editor" className="flex items-center gap-2">
-              <Edit className="h-4 w-4" />
-              Editor
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Configuración
-            </TabsTrigger>
+        <Tabs defaultValue="posts" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="posts">Posts</TabsTrigger>
+            <TabsTrigger value="stats">Estadísticas</TabsTrigger>
           </TabsList>
 
-          {/* Posts List */}
           <TabsContent value="posts" className="space-y-6">
+            {/* Header Actions */}
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">Gestión de Posts</h2>
+              <h2 className="text-xl font-semibold">Posts del Blog</h2>
               <Button
                 onClick={() => {
+                  setEditingPost(null)
                   resetForm()
-                  setActiveTab("editor")
+                  setShowForm(true)
                 }}
+                className="gap-2"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="w-4 h-4" />
                 Nuevo Post
               </Button>
             </div>
 
-            <div className="grid gap-6">
-              {posts.map((post) => (
-                <Card key={post.id}>
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">{post.title}</h3>
-                          {post.published ? (
-                            <Badge variant="default">Publicado</Badge>
-                          ) : (
-                            <Badge variant="secondary">Borrador</Badge>
-                          )}
-                          {post.featured && <Badge variant="outline">Destacado</Badge>}
-                        </div>
-
-                        {post.description && <p className="text-gray-600 mb-3">{post.description}</p>}
-
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            {formatDate(post.created_at)}
-                          </div>
-                          {post.blog_users && (
-                            <div className="flex items-center gap-1">
-                              <User className="h-4 w-4" />
-                              {post.blog_users.name}
-                            </div>
-                          )}
-                        </div>
+            {/* Post Form */}
+            {showForm && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{editingPost ? "Editar Post" : "Nuevo Post"}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="title">Título</Label>
+                        <Input
+                          id="title"
+                          value={formData.title}
+                          onChange={(e) => handleTitleChange(e.target.value)}
+                          placeholder="Título del post"
+                          required
+                        />
                       </div>
-
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => window.open(`/blog/${post.slug}`, "_blank")}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleEdit(post)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="destructive" size="sm" onClick={() => handleDelete(post.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      <div>
+                        <Label htmlFor="slug">Slug (URL)</Label>
+                        <Input
+                          id="slug"
+                          value={formData.slug}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
+                          placeholder="slug-del-post"
+                          required
+                        />
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          {/* Editor */}
-          <TabsContent value="editor" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">{isEditing ? "Editar Post" : "Nuevo Post"}</h2>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={resetForm}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleSave} disabled={isSaving}>
-                  <Save className="h-4 w-4 mr-2" />
-                  {isSaving ? "Guardando..." : "Guardar"}
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid lg:grid-cols-3 gap-6">
-              {/* Main Content */}
-              <div className="lg:col-span-2 space-y-6">
-                <Card>
-                  <CardContent className="p-6 space-y-4">
-                    <div>
-                      <Label htmlFor="title">Título *</Label>
-                      <Input
-                        id="title"
-                        value={formData.title}
-                        onChange={(e) => handleInputChange("title", e.target.value)}
-                        placeholder="Título del post"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="slug">Slug</Label>
-                      <Input
-                        id="slug"
-                        value={formData.slug}
-                        onChange={(e) => handleInputChange("slug", e.target.value)}
-                        placeholder="url-del-post"
-                      />
                     </div>
 
                     <div>
@@ -357,114 +240,267 @@ export default function BlogAdminPage() {
                       <Textarea
                         id="description"
                         value={formData.description}
-                        onChange={(e) => handleInputChange("description", e.target.value)}
-                        placeholder="Breve descripción del post"
+                        onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                        placeholder="Descripción breve del post"
                         rows={3}
                       />
                     </div>
-                  </CardContent>
-                </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Contenido *</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <WysiwygEditor
-                      content={formData.content}
-                      onChange={(content) => handleInputChange("content", content)}
-                      placeholder="Escribe el contenido de tu post aquí..."
-                    />
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Sidebar */}
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Configuración</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="published">Publicado</Label>
-                      <Switch
-                        id="published"
-                        checked={formData.published}
-                        onCheckedChange={(checked) => handleInputChange("published", checked)}
+                    <div>
+                      <Label htmlFor="image_url">URL de la imagen</Label>
+                      <Input
+                        id="image_url"
+                        value={formData.image_url}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, image_url: e.target.value }))}
+                        placeholder="https://ejemplo.com/imagen.jpg"
                       />
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="featured">Destacado</Label>
-                      <Switch
-                        id="featured"
-                        checked={formData.featured}
-                        onCheckedChange={(checked) => handleInputChange("featured", checked)}
+                    <div>
+                      <Label htmlFor="keywords">Palabras clave (separadas por comas)</Label>
+                      <Input
+                        id="keywords"
+                        value={formData.keywords}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, keywords: e.target.value }))}
+                        placeholder="LLC, Estados Unidos, fiscalidad"
                       />
                     </div>
-                  </CardContent>
-                </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Palabras clave</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <KeywordsInput
-                      keywords={formData.keywords}
-                      onChange={(keywords) => handleInputChange("keywords", keywords)}
-                      placeholder="Agregar palabra clave..."
-                    />
-                  </CardContent>
-                </Card>
+                    <div>
+                      <Label htmlFor="content">Contenido (HTML)</Label>
+                      <Textarea
+                        id="content"
+                        value={formData.content}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
+                        placeholder="Contenido del post en HTML"
+                        rows={10}
+                        required
+                      />
+                    </div>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Medios</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <MediaLibrary onSelectMedia={handleMediaSelect} />
-
-                    {formData.image_urls.length > 0 && (
-                      <div className="mt-4 space-y-2">
-                        <Label>Imágenes seleccionadas:</Label>
-                        {formData.image_urls.map((url, index) => (
-                          <div key={index} className="flex items-center justify-between text-sm">
-                            <span className="truncate">{url.split("/").pop()}</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                const newUrls = formData.image_urls.filter((_, i) => i !== index)
-                                handleInputChange("image_urls", newUrls)
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
+                    <div className="flex gap-6">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="published"
+                          checked={formData.published}
+                          onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, published: checked }))}
+                        />
+                        <Label htmlFor="published">Publicado</Label>
                       </div>
-                    )}
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="featured"
+                          checked={formData.featured}
+                          onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, featured: checked }))}
+                        />
+                        <Label htmlFor="featured">Destacado</Label>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button type="submit" className="gap-2">
+                        <Save className="w-4 h-4" />
+                        {editingPost ? "Actualizar" : "Crear"} Post
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setShowForm(false)
+                          setEditingPost(null)
+                          resetForm()
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Posts List */}
+            <div className="grid gap-4">
+              {posts.map((post) => (
+                <Card key={post.id}>
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900">{post.title}</h3>
+                          <div className="flex gap-1">
+                            {post.published ? (
+                              <Badge className="bg-green-100 text-green-800">Publicado</Badge>
+                            ) : (
+                              <Badge variant="secondary">Borrador</Badge>
+                            )}
+                            {post.featured && <Badge className="bg-blue-100 text-blue-800">Destacado</Badge>}
+                          </div>
+                        </div>
+
+                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{post.description}</p>
+
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(post.created_at).toLocaleDateString("es-ES")}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {post.reading_time} min
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Eye className="w-3 h-3" />
+                            {post.view_count} vistas
+                          </span>
+                          {post.author && (
+                            <span className="flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              {post.author.name}
+                            </span>
+                          )}
+                        </div>
+
+                        {post.keywords.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-3">
+                            {post.keywords.slice(0, 5).map((keyword) => (
+                              <Badge key={keyword} variant="outline" className="text-xs">
+                                {keyword}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex gap-2 ml-4">
+                        {post.published && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => window.open(`/blog/${post.slug}`, "_blank")}
+                            className="gap-1"
+                          >
+                            <Eye className="w-3 h-3" />
+                            Ver
+                          </Button>
+                        )}
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(post)} className="gap-1">
+                          <Edit className="w-3 h-3" />
+                          Editar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDelete(post.id)}
+                          className="gap-1 text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Eliminar
+                        </Button>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
-              </div>
+              ))}
+
+              {posts.length === 0 && (
+                <Card>
+                  <CardContent className="p-12 text-center">
+                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No hay posts</h3>
+                    <p className="text-gray-600 mb-4">Comienza creando tu primer artículo del blog.</p>
+                    <Button
+                      onClick={() => {
+                        setEditingPost(null)
+                        resetForm()
+                        setShowForm(true)
+                      }}
+                      className="gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Crear primer post
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </TabsContent>
 
-          {/* Settings */}
-          <TabsContent value="settings">
+          <TabsContent value="stats" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Total Posts</p>
+                      <p className="text-2xl font-bold text-gray-900">{posts.length}</p>
+                    </div>
+                    <FileText className="w-8 h-8 text-blue-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Publicados</p>
+                      <p className="text-2xl font-bold text-gray-900">{posts.filter((p) => p.published).length}</p>
+                    </div>
+                    <Eye className="w-8 h-8 text-green-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Borradores</p>
+                      <p className="text-2xl font-bold text-gray-900">{posts.filter((p) => !p.published).length}</p>
+                    </div>
+                    <Edit className="w-8 h-8 text-yellow-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Total Vistas</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {posts.reduce((sum, post) => sum + post.view_count, 0)}
+                      </p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-purple-600" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Categories */}
             <Card>
               <CardHeader>
-                <CardTitle>Configuración del Blog</CardTitle>
+                <CardTitle>Categorías</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">Configuración del blog próximamente disponible.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {categories.map((category) => (
+                    <div key={category.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                      <div className="w-4 h-4 rounded-full" style={{ backgroundColor: category.color }} />
+                      <div>
+                        <h4 className="font-medium">{category.name}</h4>
+                        <p className="text-sm text-gray-600">{category.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
-      </main>
+      </div>
     </div>
   )
 }
