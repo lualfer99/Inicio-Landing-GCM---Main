@@ -115,17 +115,15 @@ Gracias,`)
               )}
 
               {!showFallback && (
-              <div className="bg-white rounded-t-2xl max-w-5xl mx-auto">
-                <div
-                  className="calendly-inline-widget"
-                  data-url={calendlyUrl}
-                  style={{
-                    minWidth: "420px",
-                    height: "850px",
-                    width: "100%",
-                  }}
-                />
-              </div>
+              <div
+                className="calendly-inline-widget"
+                data-url={calendlyUrl}
+                style={{
+                  minWidth: "100%",
+                  width: "100%",
+                  height: "1000px",
+                }}
+              />
               )}
 
               {showFallback && (
