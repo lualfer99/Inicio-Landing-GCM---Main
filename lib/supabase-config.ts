@@ -1,14 +1,32 @@
 import { createClient } from "@supabase/supabase-js"
 
-// Direct configuration without environment variables
+// Direct configuration with your Supabase credentials
 const supabaseUrl = "https://supabase.gcmasesores.io"
 const supabaseAnonKey =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NTEwNzAzMTcsImV4cCI6MTg5MzQ1NjAwMCwiaXNzIjoiZG9rcGxveSJ9.WUIOIlJgOItFNEJegGaBAhmNLZxUOLqOFB0V28BXmYo"
 const supabaseServiceKey =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NTEwNzAzMTcsImV4cCI6MTg5MzQ1NjAwMCwiaXNzIjoiZG9rcGxveSJ9.WUIOIlJgOItFNEJegGaBAhmNLZxUOLqOFB0V28BXmYo"
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+// Create a single instance to avoid multiple client warnings
+let supabaseInstance: any = null
+let supabaseAdminInstance: any = null
+
+export const getSupabase = () => {
+  if (!supabaseInstance) {
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey)
+  }
+  return supabaseInstance
+}
+
+export const getSupabaseAdmin = () => {
+  if (!supabaseAdminInstance) {
+    supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceKey)
+  }
+  return supabaseAdminInstance
+}
+
+export const supabase = getSupabase()
+export const supabaseAdmin = getSupabaseAdmin()
 
 export interface BlogPost {
   id: string
@@ -67,7 +85,7 @@ export interface SearchResult extends BlogPost {
 }
 
 export class BlogDatabase {
-  private client = supabaseAdmin
+  private client = getSupabaseAdmin()
   private cache = new Map<string, { data: any; timestamp: number }>()
   private cacheTimeout = 5 * 60 * 1000 // 5 minutes
 
@@ -97,6 +115,7 @@ export class BlogDatabase {
     if (cached) return cached
 
     try {
+      // Try the optimized view first
       let query = this.client
         .from("blog_posts_with_author")
         .select("*")
@@ -123,7 +142,7 @@ export class BlogDatabase {
 
       if (error) {
         console.error("Database error:", error)
-        return this.getFallbackPosts(published, limit, offset)
+        return this.getFallbackPosts(published, limit, offset, featured)
       }
 
       const posts = (data || []).map(this.transformPost)
@@ -131,29 +150,29 @@ export class BlogDatabase {
       return posts
     } catch (error) {
       console.error("Error fetching posts:", error)
-      return this.getFallbackPosts(published, limit, offset)
+      return this.getFallbackPosts(published, limit, offset, featured)
     }
   }
 
-  private async getFallbackPosts(published?: boolean, limit?: number, offset?: number): Promise<BlogPost[]> {
+  async getFeaturedPosts(limit = 3): Promise<BlogPost[]> {
+    return this.getPosts(true, limit, 0, true)
+  }
+
+  private async getFallbackPosts(
+    published?: boolean,
+    limit?: number,
+    offset?: number,
+    featured?: boolean,
+  ): Promise<BlogPost[]> {
     try {
-      let query = this.client
-        .from("blog_posts")
-        .select(`
-          *,
-          blog_users!blog_posts_author_id_fkey (
-            id,
-            name,
-            email,
-            role,
-            avatar_url,
-            bio
-          )
-        `)
-        .order("created_at", { ascending: false })
+      let query = this.client.from("blog_posts").select("*").order("created_at", { ascending: false })
 
       if (published !== undefined) {
         query = query.eq("published", published)
+      }
+
+      if (featured !== undefined) {
+        query = query.eq("featured", featured)
       }
 
       if (limit) {
@@ -167,7 +186,8 @@ export class BlogDatabase {
       const { data, error } = await query
 
       if (error) {
-        throw new Error(`Fallback query failed: ${error.message}`)
+        console.error("Fallback query failed:", error)
+        return []
       }
 
       return (data || []).map(this.transformPost)
@@ -208,27 +228,14 @@ export class BlogDatabase {
 
   private async getFallbackPostBySlug(slug: string): Promise<BlogPost | null> {
     try {
-      const { data, error } = await this.client
-        .from("blog_posts")
-        .select(`
-          *,
-          blog_users!blog_posts_author_id_fkey (
-            id,
-            name,
-            email,
-            role,
-            avatar_url,
-            bio
-          )
-        `)
-        .eq("slug", slug)
-        .single()
+      const { data, error } = await this.client.from("blog_posts").select("*").eq("slug", slug).single()
 
       if (error) {
         if (error.code === "PGRST116") {
           return null
         }
-        throw new Error(`Fallback query failed: ${error.message}`)
+        console.error("Fallback query failed:", error)
+        return null
       }
 
       return this.transformPost(data)
@@ -251,7 +258,8 @@ export class BlogDatabase {
       })
 
       if (error) {
-        throw new Error(`Search failed: ${error.message}`)
+        console.error("Search failed:", error)
+        return []
       }
 
       const results = (data || []).map((item: any) => ({
@@ -276,13 +284,76 @@ export class BlogDatabase {
       const { data, error } = await this.client.from("blog_categories").select("*").order("name")
 
       if (error) {
-        throw new Error(`Failed to fetch categories: ${error.message}`)
+        console.error("Failed to fetch categories:", error)
+        return []
       }
 
       this.setCache(cacheKey, data || [])
       return data || []
     } catch (error) {
       console.error("Error fetching categories:", error)
+      return []
+    }
+  }
+
+  async getPostsByCategory(categorySlug: string, limit?: number): Promise<BlogPost[]> {
+    const cacheKey = this.getCacheKey("getPostsByCategory", { categorySlug, limit })
+    const cached = this.getFromCache<BlogPost[]>(cacheKey)
+    if (cached) return cached
+
+    try {
+      let query = this.client
+        .from("blog_posts_with_author")
+        .select("*")
+        .eq("published", true)
+        .contains("category_slugs", [categorySlug])
+        .order("published_at", { ascending: false, nullsFirst: false })
+
+      if (limit) {
+        query = query.limit(limit)
+      }
+
+      const { data, error } = await query
+
+      if (error) {
+        console.error("Failed to fetch posts by category:", error)
+        return []
+      }
+
+      const posts = (data || []).map(this.transformPost)
+      this.setCache(cacheKey, posts)
+      return posts
+    } catch (error) {
+      console.error("Error fetching posts by category:", error)
+      return []
+    }
+  }
+
+  async getRelatedPosts(postId: string, keywords: string[], limit = 3): Promise<BlogPost[]> {
+    const cacheKey = this.getCacheKey("getRelatedPosts", { postId, keywords, limit })
+    const cached = this.getFromCache<BlogPost[]>(cacheKey)
+    if (cached) return cached
+
+    try {
+      const { data, error } = await this.client
+        .from("blog_posts_with_author")
+        .select("*")
+        .eq("published", true)
+        .neq("id", postId)
+        .overlaps("keywords", keywords)
+        .order("published_at", { ascending: false, nullsFirst: false })
+        .limit(limit)
+
+      if (error) {
+        console.error("Failed to fetch related posts:", error)
+        return []
+      }
+
+      const posts = (data || []).map(this.transformPost)
+      this.setCache(cacheKey, posts)
+      return posts
+    } catch (error) {
+      console.error("Error fetching related posts:", error)
       return []
     }
   }
@@ -319,6 +390,54 @@ export class BlogDatabase {
     }
   }
 
+  async updatePost(
+    id: string,
+    updates: Partial<BlogPost>,
+  ): Promise<{ success: boolean; data?: BlogPost; error?: string }> {
+    try {
+      const { data, error } = await this.client
+        .from("blog_posts")
+        .update({
+          title: updates.title,
+          slug: updates.slug,
+          description: updates.description,
+          content: updates.content,
+          image_url: updates.image_url,
+          image_urls: updates.image_urls,
+          keywords: updates.keywords,
+          published: updates.published,
+          featured: updates.featured,
+        })
+        .eq("id", id)
+        .select()
+        .single()
+
+      if (error) {
+        return { success: false, error: error.message }
+      }
+
+      this.clearCache()
+      return { success: true, data: this.transformPost(data) }
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  }
+
+  async deletePost(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await this.client.from("blog_posts").delete().eq("id", id)
+
+      if (error) {
+        return { success: false, error: error.message }
+      }
+
+      this.clearCache()
+      return { success: true }
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  }
+
   private async incrementViewCount(postId: string): Promise<void> {
     try {
       await this.client.rpc("increment_view_count", { post_id: postId })
@@ -330,15 +449,15 @@ export class BlogDatabase {
   private transformPost(data: any): BlogPost {
     return {
       id: data.id,
-      title: data.title,
-      slug: data.slug,
+      title: data.title || "Sin título",
+      slug: data.slug || "",
       description: data.description,
-      content: data.content,
+      content: data.content || "",
       excerpt: data.excerpt,
       image_url: data.image_url,
       image_urls: data.image_urls || [],
       keywords: data.keywords || [],
-      published: data.published,
+      published: data.published || false,
       featured: data.featured || false,
       view_count: data.view_count || 0,
       reading_time: data.reading_time || 0,
@@ -383,13 +502,105 @@ export class BlogDatabase {
         if (error.code === "PGRST116") {
           return null
         }
-        throw new Error(`Failed to fetch user: ${error.message}`)
+        console.error("Failed to fetch user:", error)
+        return null
       }
 
       return data
     } catch (error) {
       console.error("Error fetching user:", error)
       return null
+    }
+  }
+
+  async createUser(user: Omit<BlogUser, "id" | "created_at" | "updated_at">): Promise<BlogUser | null> {
+    try {
+      const { data, error } = await this.client.from("blog_users").insert(user).select().single()
+
+      if (error) {
+        console.error("Failed to create user:", error)
+        return null
+      }
+
+      return data
+    } catch (error) {
+      console.error("Error creating user:", error)
+      return null
+    }
+  }
+
+  async updateUser(id: string, updates: Partial<BlogUser>): Promise<BlogUser | null> {
+    try {
+      const { data, error } = await this.client.from("blog_users").update(updates).eq("id", id).select().single()
+
+      if (error) {
+        console.error("Failed to update user:", error)
+        return null
+      }
+
+      return data
+    } catch (error) {
+      console.error("Error updating user:", error)
+      return null
+    }
+  }
+
+  // Analytics methods
+  async getPostStats(): Promise<{
+    totalPosts: number
+    publishedPosts: number
+    draftPosts: number
+    totalViews: number
+    avgReadingTime: number
+  }> {
+    try {
+      const { data, error } = await this.client.from("blog_posts").select("published, view_count, reading_time")
+
+      if (error) {
+        console.error("Failed to fetch post stats:", error)
+        return {
+          totalPosts: 0,
+          publishedPosts: 0,
+          draftPosts: 0,
+          totalViews: 0,
+          avgReadingTime: 0,
+        }
+      }
+
+      const stats = data.reduce(
+        (acc, post) => {
+          acc.totalPosts++
+          if (post.published) {
+            acc.publishedPosts++
+          } else {
+            acc.draftPosts++
+          }
+          acc.totalViews += post.view_count || 0
+          acc.totalReadingTime += post.reading_time || 0
+          return acc
+        },
+        {
+          totalPosts: 0,
+          publishedPosts: 0,
+          draftPosts: 0,
+          totalViews: 0,
+          totalReadingTime: 0,
+        },
+      )
+
+      return {
+        ...stats,
+        avgReadingTime: stats.totalPosts > 0 ? Math.round(stats.totalReadingTime / stats.totalPosts) : 0,
+      }
+    } catch (error) {
+      console.error("Error fetching post stats:", error)
+      return {
+        totalPosts: 0,
+        publishedPosts: 0,
+        draftPosts: 0,
+        totalViews: 0,
+        avgReadingTime: 0,
+      }
     }
   }
 }

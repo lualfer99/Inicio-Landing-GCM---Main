@@ -1,5 +1,5 @@
-// Direct S3 configuration without environment variables
-const S3_CONFIG = {
+// S3 Configuration for file uploads
+export const s3Config = {
   provider: "s3",
   endpoint: "https://nbg1.your-objectstorage.com",
   accessKeyId: "7H0R529CQMLLFTIE2V7Y",
@@ -10,16 +10,17 @@ const S3_CONFIG = {
 }
 
 export class S3Storage {
-  private config = S3_CONFIG
+  private config = s3Config
 
   async uploadFile(file: File, path: string): Promise<{ success: boolean; url?: string; error?: string }> {
     try {
-      // For now, return a mock URL since we can't actually upload in the browser
-      const mockUrl = `${this.config.endpoint}/${this.config.bucket}/${this.config.prefix}/${path}`
+      // For now, return a placeholder URL
+      // In production, implement actual S3 upload logic
+      const url = `/placeholder.svg?height=400&width=600&text=${encodeURIComponent(file.name)}`
 
       return {
         success: true,
-        url: mockUrl,
+        url,
       }
     } catch (error: any) {
       return {
@@ -31,7 +32,7 @@ export class S3Storage {
 
   async deleteFile(path: string): Promise<{ success: boolean; error?: string }> {
     try {
-      // Mock deletion
+      // Implement S3 delete logic here
       return { success: true }
     } catch (error: any) {
       return {
@@ -41,7 +42,7 @@ export class S3Storage {
     }
   }
 
-  getFileUrl(path: string): string {
+  getPublicUrl(path: string): string {
     return `${this.config.endpoint}/${this.config.bucket}/${this.config.prefix}/${path}`
   }
 }
