@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js"
+import { uploadBlogImage as uploadToS3, deleteBlogImage as deleteFromS3 } from "./s3-storage"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -30,44 +31,9 @@ export type BlogUser = {
   created_at: string
 }
 
-// Blog storage functions
-export async function uploadBlogImage(file: File): Promise<{ url: string | null; error: string | null }> {
-  try {
-    const fileExt = file.name.split(".").pop()
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-    const filePath = `${fileName}`
-
-    const { error: uploadError } = await supabase.storage.from("images").upload(`blog/${filePath}`, file)
-
-    if (uploadError) {
-      return { url: null, error: uploadError.message }
-    }
-
-    const { data } = supabase.storage.from("images").getPublicUrl(`blog/${filePath}`)
-
-    return { url: data.publicUrl, error: null }
-  } catch (error) {
-    return { url: null, error: "Upload failed" }
-  }
-}
-
-export async function deleteBlogImage(url: string): Promise<{ success: boolean; error: string | null }> {
-  try {
-    const urlParts = url.split("/")
-    const fileName = urlParts[urlParts.length - 1]
-    if (!fileName) return { success: false, error: "Invalid URL" }
-
-    const { error } = await supabase.storage.from("images").remove([`blog/${fileName}`])
-
-    if (error) {
-      return { success: false, error: error.message }
-    }
-
-    return { success: true, error: null }
-  } catch (error) {
-    return { success: false, error: "Delete failed" }
-  }
-}
+// Re-export S3 storage functions
+export const uploadBlogImage = uploadToS3
+export const deleteBlogImage = deleteFromS3
 
 // Utility functions
 export function generateSlug(title: string): string {

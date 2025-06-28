@@ -50,21 +50,3 @@ CREATE POLICY "Blog posts can be updated by authenticated users" ON blog_posts
 
 CREATE POLICY "Blog posts can be deleted by authenticated users" ON blog_posts
   FOR DELETE USING (auth.role() = 'authenticated');
-
--- Create storage bucket for blog images
-INSERT INTO storage.buckets (id, name, public) 
-VALUES ('images', 'images', true)
-ON CONFLICT (id) DO NOTHING;
-
--- Storage policies for blog images
-CREATE POLICY "Blog images are publicly accessible" ON storage.objects
-  FOR SELECT USING (bucket_id = 'images' AND (storage.foldername(name))[1] = 'blog');
-
-CREATE POLICY "Authenticated users can upload blog images" ON storage.objects
-  FOR INSERT WITH CHECK (bucket_id = 'images' AND (storage.foldername(name))[1] = 'blog');
-
-CREATE POLICY "Authenticated users can update blog images" ON storage.objects
-  FOR UPDATE USING (bucket_id = 'images' AND (storage.foldername(name))[1] = 'blog');
-
-CREATE POLICY "Authenticated users can delete blog images" ON storage.objects
-  FOR DELETE USING (bucket_id = 'images' AND (storage.foldername(name))[1] = 'blog');

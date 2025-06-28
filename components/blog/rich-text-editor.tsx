@@ -1,11 +1,9 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useCallback } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Bold, Italic, List, ListOrdered, LinkIcon, ImageIcon, Heading1, Heading2, Quote } from "lucide-react"
+import { Bold, Italic, List, Link2, Heading1, Heading2, Eye, Edit } from "lucide-react"
 
 interface RichTextEditorProps {
   value: string
@@ -14,136 +12,104 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorProps) {
-  const [selectedText, setSelectedText] = useState("")
+  const [isPreview, setIsPreview] = useState(false)
 
-  const insertText = useCallback(
-    (before: string, after = "") => {
-      const textarea = document.querySelector("textarea[data-rich-editor]") as HTMLTextAreaElement
-      if (!textarea) return
+  const insertMarkdown = (before: string, after = "") => {
+    const textarea = document.querySelector("textarea[data-rich-editor]") as HTMLTextAreaElement
+    if (!textarea) return
 
-      const start = textarea.selectionStart
-      const end = textarea.selectionEnd
-      const selectedText = value.substring(start, end)
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const selectedText = value.substring(start, end)
 
-      const newText = value.substring(0, start) + before + selectedText + after + value.substring(end)
-      onChange(newText)
+    const newText = value.substring(0, start) + before + selectedText + after + value.substring(end)
+    onChange(newText)
 
-      // Restore cursor position
-      setTimeout(() => {
-        textarea.focus()
-        textarea.setSelectionRange(start + before.length, start + before.length + selectedText.length)
-      }, 0)
-    },
-    [value, onChange],
-  )
-
-  const formatButtons = [
-    {
-      icon: Bold,
-      label: "Bold",
-      action: () => insertText("**", "**"),
-    },
-    {
-      icon: Italic,
-      label: "Italic",
-      action: () => insertText("*", "*"),
-    },
-    {
-      icon: Heading1,
-      label: "Heading 1",
-      action: () => insertText("# "),
-    },
-    {
-      icon: Heading2,
-      label: "Heading 2",
-      action: () => insertText("## "),
-    },
-    {
-      icon: List,
-      label: "Bullet List",
-      action: () => insertText("- "),
-    },
-    {
-      icon: ListOrdered,
-      label: "Numbered List",
-      action: () => insertText("1. "),
-    },
-    {
-      icon: LinkIcon,
-      label: "Link",
-      action: () => insertText("[", "](url)"),
-    },
-    {
-      icon: ImageIcon,
-      label: "Image",
-      action: () => insertText("![alt text](", ")"),
-    },
-    {
-      icon: Quote,
-      label: "Quote",
-      action: () => insertText("> "),
-    },
-  ]
-
-  const convertToHtml = (markdown: string): string => {
-    return (
-      markdown
-        // Headers
-        .replace(/^### (.*$)/gim, "<h3>$1</h3>")
-        .replace(/^## (.*$)/gim, "<h2>$1</h2>")
-        .replace(/^# (.*$)/gim, "<h1>$1</h1>")
-        // Bold
-        .replace(/\*\*(.*)\*\*/gim, "<strong>$1</strong>")
-        // Italic
-        .replace(/\*(.*)\*/gim, "<em>$1</em>")
-        // Links
-        .replace(/\[([^\]]*)\]$$([^$$]*)\)/gim, '<a href="$2">$1</a>')
-        // Images
-        .replace(/!\[([^\]]*)\]$$([^$$]*)\)/gim, '<img alt="$1" src="$2" />')
-        // Lists
-        .replace(/^- (.*$)/gim, "<li>$1</li>")
-        .replace(/^1\. (.*$)/gim, "<li>$1</li>")
-        // Quotes
-        .replace(/^> (.*$)/gim, "<blockquote>$1</blockquote>")
-        // Line breaks
-        .replace(/\n/gim, "<br>")
-    )
+    // Restore cursor position
+    setTimeout(() => {
+      textarea.focus()
+      textarea.setSelectionRange(start + before.length, start + before.length + selectedText.length)
+    }, 0)
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const markdownValue = e.target.value
-    const htmlValue = convertToHtml(markdownValue)
-    onChange(htmlValue)
+  const formatContent = (content: string) => {
+    return content
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.*?)\*/g, "<em>$1</em>")
+      .replace(/^# (.*$)/gm, "<h1>$1</h1>")
+      .replace(/^## (.*$)/gm, "<h2>$1</h2>")
+      .replace(/^### (.*$)/gm, "<h3>$1</h3>")
+      .replace(/^\* (.*$)/gm, "<li>$1</li>")
+      .replace(/(<li>.*<\/li>)/s, "<ul>$1</ul>")
+      .replace(/^\d+\. (.*$)/gm, "<li>$1</li>")
+      .replace(/\[([^\]]+)\]$$([^)]+)$$/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+      .replace(/\n\n/g, "</p><p>")
+      .replace(/^(?!<[h|u|l])(.+)$/gm, "<p>$1</p>")
+      .replace(/<p><\/p>/g, "")
   }
 
   return (
     <div className="border border-gray-300 rounded-lg overflow-hidden">
-      <div className="bg-gray-50 border-b border-gray-300 p-2 flex flex-wrap gap-1">
-        {formatButtons.map((button, index) => (
-          <Button
-            key={index}
-            variant="ghost"
-            size="sm"
-            onClick={button.action}
-            className="h-8 w-8 p-0 hover:bg-gray-200"
-            title={button.label}
-            type="button"
-          >
-            <button.icon className="h-4 w-4" />
+      {/* Toolbar */}
+      <div className="bg-gray-50 border-b border-gray-300 p-2 flex items-center gap-1 flex-wrap">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => insertMarkdown("**", "**")}
+          className="h-8 w-8 p-0"
+        >
+          <Bold className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => insertMarkdown("*", "*")}
+          className="h-8 w-8 p-0"
+        >
+          <Italic className="h-4 w-4" />
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => insertMarkdown("# ")} className="h-8 w-8 p-0">
+          <Heading1 className="h-4 w-4" />
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => insertMarkdown("## ")} className="h-8 w-8 p-0">
+          <Heading2 className="h-4 w-4" />
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => insertMarkdown("* ")} className="h-8 w-8 p-0">
+          <List className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => insertMarkdown("[", "](url)")}
+          className="h-8 w-8 p-0"
+        >
+          <Link2 className="h-4 w-4" />
+        </Button>
+        <div className="ml-auto">
+          <Button type="button" variant="ghost" size="sm" onClick={() => setIsPreview(!isPreview)} className="h-8 px-3">
+            {isPreview ? <Edit className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
+            {isPreview ? "Edit" : "Preview"}
           </Button>
-        ))}
+        </div>
       </div>
-      <Textarea
-        data-rich-editor
-        value={value.replace(/<[^>]*>/g, "")} // Show as plain text for editing
-        onChange={handleChange}
-        placeholder={placeholder}
-        className="min-h-[300px] border-0 rounded-none resize-none focus:ring-0"
-        onSelect={(e) => {
-          const target = e.target as HTMLTextAreaElement
-          setSelectedText(target.value.substring(target.selectionStart, target.selectionEnd))
-        }}
-      />
+
+      {/* Content Area */}
+      <div className="min-h-[300px]">
+        {isPreview ? (
+          <div className="p-4 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: formatContent(value) }} />
+        ) : (
+          <Textarea
+            data-rich-editor
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder || "Write your content here..."}
+            className="min-h-[300px] border-0 resize-none focus:ring-0 rounded-none"
+          />
+        )}
+      </div>
     </div>
   )
 }
