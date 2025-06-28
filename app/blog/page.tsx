@@ -1,173 +1,166 @@
-import type { Metadata } from "next"
-import Link from "next/link"
-import Image from "next/image"
-import { BlogHeader } from "@/components/blog/blog-header"
-import { BlogDatabase, formatDate, extractExcerpt } from "@/lib/supabase"
-import { Card, CardContent } from "@/components/ui/card"
+import { blogDb } from "@/lib/supabase"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, User, ArrowRight } from "lucide-react"
+import { CalendarDays, User, Clock } from "lucide-react"
+import Link from "next/link"
+import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Blog - GCM Asesores",
-  description: "Artículos y guías sobre LLCs, fiscalidad internacional y servicios para emprendedores digitales.",
+  title: "Blog - GCM Asesores | Guías sobre LLCs y Fiscalidad Internacional",
+  description:
+    "Descubre nuestras guías expertas sobre creación de LLCs en Estados Unidos, optimización fiscal y estrategias para emprendedores digitales españoles.",
+  keywords: ["blog", "LLC", "fiscalidad", "Estados Unidos", "España", "emprendedores", "asesoría fiscal"],
   openGraph: {
     title: "Blog - GCM Asesores",
-    description: "Artículos y guías sobre LLCs, fiscalidad internacional y servicios para emprendedores digitales.",
+    description: "Guías expertas sobre LLCs y fiscalidad internacional",
     type: "website",
+    url: "https://gcmasesores.io/blog",
   },
 }
 
+function formatDate(dateString: string): string {
+  const date = new Date(dateString)
+  return date.toLocaleDateString("es-ES", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })
+}
+
+function calculateReadingTime(content: string): number {
+  const wordsPerMinute = 200
+  const words = content.replace(/<[^>]*>/g, "").split(/\s+/).length
+  return Math.ceil(words / wordsPerMinute)
+}
+
 export default async function BlogPage() {
-  const posts = await BlogDatabase.getPosts()
+  let posts = []
+  let error = null
+
+  try {
+    posts = await blogDb.getPosts(true) // Only published posts
+  } catch (err) {
+    console.error("Error fetching posts:", err)
+    error = err instanceof Error ? err.message : "Failed to load posts"
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <BlogHeader />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Blog de GCM Asesores</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Artículos y guías especializadas sobre <strong>LLCs</strong>, <strong>fiscalidad internacional</strong>y
-            servicios para emprendedores digitales que buscan expandir sus negocios.
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">Blog de GCM Asesores</h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Guías expertas sobre creación de LLCs, optimización fiscal y estrategias para emprendedores digitales que
+              operan entre España y Estados Unidos.
+            </p>
+          </div>
         </div>
+      </div>
 
-        {/* Featured Posts */}
-        {posts.some((post) => post.featured) && (
-          <section className="mb-16">
-            <h2 className="text-2xl font-bold text-gray-900 mb-8">Artículos Destacados</h2>
-            <div className="grid md:grid-cols-2 gap-8">
-              {posts
-                .filter((post) => post.featured)
-                .slice(0, 2)
-                .map((post) => (
-                  <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                    {post.image_urls && post.image_urls.length > 0 && (
-                      <div className="aspect-video relative">
-                        <Image
-                          src={post.image_urls[0] || "/placeholder.svg"}
-                          alt={post.title}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    )}
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          {formatDate(post.created_at)}
-                        </div>
-                        {post.blog_users && (
-                          <div className="flex items-center gap-1">
-                            <User className="h-4 w-4" />
-                            {post.blog_users.name}
-                          </div>
-                        )}
-                      </div>
-
-                      <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">{post.title}</h3>
-
-                      {post.description && <p className="text-gray-600 mb-4 line-clamp-3">{post.description}</p>}
-
-                      {post.keywords && post.keywords.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {post.keywords.slice(0, 3).map((keyword, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
-                              {keyword}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-
-                      <Link
-                        href={`/blog/${post.slug}`}
-                        className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
-                      >
-                        Leer más
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </CardContent>
-                  </Card>
-                ))}
+      {/* Content */}
+      <div className="container mx-auto px-4 py-12">
+        {error ? (
+          <div className="text-center py-12">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+              <h2 className="text-lg font-semibold text-red-800 mb-2">Error al cargar el blog</h2>
+              <p className="text-red-600 text-sm">{error}</p>
+              <p className="text-red-600 text-sm mt-2">
+                Por favor, asegúrate de que la base de datos esté configurada correctamente.
+              </p>
             </div>
-          </section>
-        )}
-
-        {/* All Posts */}
-        <section>
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">Todos los Artículos</h2>
-
-          {posts.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {posts.map((post) => (
-                <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  {post.image_urls && post.image_urls.length > 0 && (
-                    <div className="aspect-video relative">
-                      <Image
-                        src={post.image_urls[0] || "/placeholder.svg"}
-                        alt={post.title}
-                        fill
-                        className="object-cover"
-                      />
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-md mx-auto">
+              <h2 className="text-lg font-semibold text-blue-800 mb-2">Próximamente</h2>
+              <p className="text-blue-600">Estamos preparando contenido valioso para ti. ¡Vuelve pronto!</p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {posts.map((post) => (
+              <Card key={post.id} className="hover:shadow-lg transition-shadow duration-300">
+                <CardHeader>
+                  <div className="flex items-center justify-between mb-2">
+                    {post.featured && (
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                        Destacado
+                      </Badge>
+                    )}
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Clock className="w-4 h-4 mr-1" />
+                      {calculateReadingTime(post.content)} min
                     </div>
-                  )}
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {formatDate(post.created_at)}
-                      </div>
-                      {post.blog_users && (
-                        <div className="flex items-center gap-1">
-                          <User className="h-4 w-4" />
-                          {post.blog_users.name}
-                        </div>
-                      )}
-                    </div>
-
-                    <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2">{post.title}</h3>
-
-                    <p className="text-gray-600 mb-4 line-clamp-3">
-                      {post.description || extractExcerpt(post.content)}
-                    </p>
-
+                  </div>
+                  <CardTitle className="line-clamp-2 hover:text-blue-600 transition-colors">
+                    <Link href={`/blog/${post.slug}`}>{post.title}</Link>
+                  </CardTitle>
+                  {post.description && <CardDescription className="line-clamp-3">{post.description}</CardDescription>}
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Keywords */}
                     {post.keywords && post.keywords.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-4">
+                      <div className="flex flex-wrap gap-1">
                         {post.keywords.slice(0, 3).map((keyword, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
+                          <Badge key={index} variant="outline" className="text-xs">
                             {keyword}
                           </Badge>
                         ))}
                         {post.keywords.length > 3 && (
-                          <span className="text-xs text-gray-500">+{post.keywords.length - 3}</span>
+                          <Badge variant="outline" className="text-xs">
+                            +{post.keywords.length - 3}
+                          </Badge>
                         )}
                       </div>
                     )}
 
+                    {/* Meta info */}
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <div className="flex items-center">
+                        <CalendarDays className="w-4 h-4 mr-1" />
+                        {formatDate(post.created_at)}
+                      </div>
+                      {post.author && (
+                        <div className="flex items-center">
+                          <User className="w-4 h-4 mr-1" />
+                          {post.author.name}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Read more link */}
                     <Link
                       href={`/blog/${post.slug}`}
-                      className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+                      className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors"
                     >
-                      Leer más
-                      <ArrowRight className="h-4 w-4" />
+                      Leer más →
                     </Link>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">No hay artículos publicados</h3>
-              <p className="text-gray-600">
-                Pronto publicaremos contenido valioso sobre LLCs y fiscalidad internacional.
-              </p>
-            </div>
-          )}
-        </section>
-      </main>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* CTA Section */}
+        <div className="mt-16 text-center">
+          <div className="bg-white rounded-lg shadow-sm border p-8 max-w-2xl mx-auto">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Necesitas asesoría personalizada?</h2>
+            <p className="text-gray-600 mb-6">
+              Nuestros expertos pueden ayudarte con la creación de tu LLC y optimización fiscal.
+            </p>
+            <Link
+              href="/#consultation"
+              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Solicitar Consulta Gratuita
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

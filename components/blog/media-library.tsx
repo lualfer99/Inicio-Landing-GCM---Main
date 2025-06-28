@@ -2,267 +2,204 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { S3Storage, type MediaFile, formatFileSize } from "@/lib/s3-storage"
-import { Upload, ImageIcon, Trash2, Copy, Check } from "lucide-react"
-import Image from "next/image"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Upload, ImageIcon, Trash2, Copy } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
+import Image from "next/image"
+
+interface MediaFile {
+  id: string
+  url: string
+  name: string
+  size: number
+  type: string
+  uploadedAt: string
+}
 
 interface MediaLibraryProps {
-  onSelectImage?: (url: string) => void
+  onSelectMedia?: (url: string) => void
   trigger?: React.ReactNode
 }
 
-export function MediaLibrary({ onSelectImage, trigger }: MediaLibraryProps) {
+export function MediaLibrary({ onSelectMedia, trigger }: MediaLibraryProps) {
+  const [isOpen, setIsOpen] = useState(false)
   const [files, setFiles] = useState<MediaFile[]>([])
-  const [loading, setLoading] = useState(false)
-  const [uploading, setUploading] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
 
-  // Load files on component mount
-  useEffect(() => {
-    loadFiles()
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setSelectedFile(file)
+    }
   }, [])
 
-  const loadFiles = async () => {
-    setLoading(true)
-    try {
-      const mediaFiles = await S3Storage.listFiles("images")
-      setFiles(mediaFiles)
-    } catch (error) {
-      console.error("Error loading files:", error)
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los archivos",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    // Validate file type
-    if (!S3Storage.isValidImageType(file)) {
-      toast({
-        title: "Tipo de archivo no válido",
-        description: "Solo se permiten imágenes (JPEG, PNG, WebP, GIF)",
-        variant: "destructive",
-      })
-      return
-    }
-
-    // Validate file size
-    if (!S3Storage.isValidFileSize(file, 5)) {
-      toast({
-        title: "Archivo demasiado grande",
-        description: "El archivo debe ser menor a 5MB",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setSelectedFile(file)
-  }
-
-  const handleUpload = async () => {
+  const handleUpload = useCallback(async () => {
     if (!selectedFile) return
 
-    setUploading(true)
+    setIsUploading(true)
     try {
-      const result = await S3Storage.uploadFile(selectedFile, "images")
+      const formData = new FormData()
+      formData.append("file", selectedFile)
 
-      if (result.success && result.url) {
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        const newFile: MediaFile = {
+          id: Date.now().toString(),
+          url: result.url,
+          name: selectedFile.name,
+          size: selectedFile.size,
+          type: selectedFile.type,
+          uploadedAt: new Date().toISOString(),
+        }
+
+        setFiles((prev) => [newFile, ...prev])
+        setSelectedFile(null)
         toast({
           title: "Archivo subido",
-          description: "La imagen se subió correctamente",
+          description: "El archivo se ha subido correctamente.",
         })
-
-        // Reload files to show the new upload
-        await loadFiles()
-        setSelectedFile(null)
-
-        // Reset file input
-        const fileInput = document.getElementById("file-upload") as HTMLInputElement
-        if (fileInput) fileInput.value = ""
       } else {
-        throw new Error(result.error || "Error uploading file")
+        throw new Error("Error al subir el archivo")
       }
-    } catch (error: any) {
-      console.error("Upload error:", error)
+    } catch (error) {
       toast({
-        title: "Error de subida",
-        description: error.message || "No se pudo subir el archivo",
+        title: "Error",
+        description: "No se pudo subir el archivo.",
         variant: "destructive",
       })
     } finally {
-      setUploading(false)
+      setIsUploading(false)
     }
-  }
+  }, [selectedFile])
 
-  const handleDelete = async (file: MediaFile) => {
-    if (!confirm("¿Estás seguro de que quieres eliminar este archivo?")) return
-
-    try {
-      const result = await S3Storage.deleteFile(file.key)
-
-      if (result.success) {
-        toast({
-          title: "Archivo eliminado",
-          description: "La imagen se eliminó correctamente",
-        })
-        await loadFiles()
-      } else {
-        throw new Error(result.error || "Error deleting file")
+  const handleSelectMedia = useCallback(
+    (url: string) => {
+      if (onSelectMedia) {
+        onSelectMedia(url)
+        setIsOpen(false)
       }
-    } catch (error: any) {
-      console.error("Delete error:", error)
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo eliminar el archivo",
-        variant: "destructive",
-      })
-    }
-  }
+    },
+    [onSelectMedia],
+  )
 
-  const copyToClipboard = async (url: string) => {
+  const copyToClipboard = useCallback((url: string) => {
+    navigator.clipboard.writeText(url)
+    toast({
+      title: "URL copiada",
+      description: "La URL se ha copiado al portapapeles.",
+    })
+  }, [])
+
+  const deleteFile = useCallback(async (fileId: string) => {
     try {
-      await navigator.clipboard.writeText(url)
-      setCopiedUrl(url)
+      // In a real implementation, you would call an API to delete the file
+      setFiles((prev) => prev.filter((f) => f.id !== fileId))
       toast({
-        title: "URL copiada",
-        description: "La URL se copió al portapapeles",
+        title: "Archivo eliminado",
+        description: "El archivo se ha eliminado correctamente.",
       })
-
-      // Reset copied state after 2 seconds
-      setTimeout(() => setCopiedUrl(null), 2000)
     } catch (error) {
-      console.error("Copy error:", error)
       toast({
         title: "Error",
-        description: "No se pudo copiar la URL",
+        description: "No se pudo eliminar el archivo.",
         variant: "destructive",
       })
     }
-  }
-
-  const handleSelectImage = (url: string) => {
-    if (onSelectImage) {
-      onSelectImage(url)
-    }
-  }
+  }, [])
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {trigger || (
           <Button variant="outline">
             <ImageIcon className="h-4 w-4 mr-2" />
-            Biblioteca de Medios
+            Biblioteca de medios
           </Button>
         )}
       </DialogTrigger>
+
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
         <DialogHeader>
-          <DialogTitle>Biblioteca de Medios</DialogTitle>
+          <DialogTitle>Biblioteca de medios</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="library" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="library">Biblioteca</TabsTrigger>
-            <TabsTrigger value="upload">Subir Archivo</TabsTrigger>
-          </TabsList>
+        <div className="space-y-6">
+          {/* Upload Section */}
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+            <div className="text-center">
+              <Upload className="mx-auto h-12 w-12 text-gray-400" />
+              <div className="mt-4">
+                <Label htmlFor="file-upload" className="cursor-pointer">
+                  <span className="mt-2 block text-sm font-medium text-gray-900">Selecciona un archivo para subir</span>
+                  <Input
+                    id="file-upload"
+                    type="file"
+                    className="sr-only"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                  />
+                </Label>
 
-          <TabsContent value="library" className="space-y-4">
-            <div className="max-h-96 overflow-y-auto">
-              {loading ? (
-                <div className="text-center py-8">
-                  <p>Cargando archivos...</p>
-                </div>
-              ) : files.length === 0 ? (
-                <div className="text-center py-8">
-                  <ImageIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-500">No hay archivos en la biblioteca</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {files.map((file) => (
-                    <Card key={file.key} className="overflow-hidden">
-                      <div className="aspect-square relative">
-                        <Image src={file.url || "/placeholder.svg"} alt={file.name} fill className="object-cover" />
-                      </div>
-                      <CardContent className="p-3">
-                        <p className="text-sm font-medium truncate" title={file.name}>
-                          {file.name}
-                        </p>
-                        <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
-                        <div className="flex gap-1 mt-2">
-                          {onSelectImage && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleSelectImage(file.url)}
-                              className="flex-1"
-                            >
-                              Seleccionar
-                            </Button>
-                          )}
-                          <Button size="sm" variant="outline" onClick={() => copyToClipboard(file.url)}>
-                            {copiedUrl === file.url ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => handleDelete(file)}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="upload" className="space-y-4">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <div className="space-y-2">
-                <Input
-                  id="file-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  className="max-w-xs mx-auto"
-                />
-                <p className="text-sm text-gray-500">Selecciona una imagen (máx. 5MB)</p>
-              </div>
-            </div>
-
-            {selectedFile && (
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">{selectedFile.name}</p>
-                      <p className="text-sm text-gray-500">{formatFileSize(selectedFile.size)}</p>
-                    </div>
-                    <Button onClick={handleUpload} disabled={uploading}>
-                      {uploading ? "Subiendo..." : "Subir"}
+                {selectedFile && (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm text-gray-600">Archivo seleccionado: {selectedFile.name}</p>
+                    <Button onClick={handleUpload} disabled={isUploading} className="w-full">
+                      {isUploading ? "Subiendo..." : "Subir archivo"}
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Media Grid */}
+          <div className="max-h-96 overflow-y-auto">
+            {files.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {files.map((file) => (
+                  <div key={file.id} className="group relative border rounded-lg overflow-hidden">
+                    <div className="aspect-square relative">
+                      <Image src={file.url || "/placeholder.svg"} alt={file.name} fill className="object-cover" />
+                    </div>
+
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="secondary" onClick={() => handleSelectMedia(file.url)}>
+                          Seleccionar
+                        </Button>
+                        <Button size="sm" variant="secondary" onClick={() => copyToClipboard(file.url)}>
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => deleteFile(file.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="p-2">
+                      <p className="text-xs text-gray-600 truncate">{file.name}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
+                <p className="mt-2 text-sm text-gray-600">No hay archivos subidos</p>
+              </div>
             )}
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   )

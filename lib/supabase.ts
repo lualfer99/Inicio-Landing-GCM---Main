@@ -5,93 +5,52 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-export type BlogUser = {
-  id: string
-  email: string
-  name: string
-  role: "admin" | "editor" | "subscriber"
-  is_active: boolean
-  created_at: string
-  updated_at: string
-}
+// Server-side client with service role key
+export const supabaseAdmin = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
-export type Post = {
+export interface BlogPost {
   id: string
   title: string
   slug: string
-  description: string | null
+  description?: string
   content: string
-  image_urls: string[] | null
-  keywords: string[] | null
+  image_urls: string[]
+  keywords: string[]
   published: boolean
   featured: boolean
-  author_id: string | null
+  author_id?: string
   created_at: string
   updated_at: string
-  blog_users?: {
+  author?: {
+    id: string
     name: string
     email: string
     role: string
   }
 }
 
-// Utility functions
-export function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // Remove accents
-    .replace(/[^a-z0-9\s-]/g, "") // Remove special characters
-    .replace(/\s+/g, "-") // Replace spaces with hyphens
-    .replace(/-+/g, "-") // Replace multiple hyphens with single
-    .trim()
+export interface BlogUser {
+  id: string
+  email: string
+  name: string
+  password_hash: string
+  role: "admin" | "editor" | "subscriber"
+  is_active: boolean
+  created_at: string
+  updated_at: string
 }
 
-export function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("es-ES", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
-}
-
-export function extractExcerpt(content: string, maxLength = 150): string {
-  // Remove HTML tags and get plain text
-  const plainText = content.replace(/<[^>]*>/g, "")
-  return plainText.length > maxLength ? plainText.substring(0, maxLength) + "..." : plainText
-}
-
-// Secure database operations with role-based access control
 export class BlogDatabase {
-  // Get user by email with role verification
-  static async getUserByEmail(email: string): Promise<BlogUser | null> {
+  private client = supabaseAdmin
+
+  async getPosts(published?: boolean): Promise<BlogPost[]> {
     try {
-      const { data, error } = await supabase
-        .from("blog_users")
-        .select("*")
-        .eq("email", email)
-        .eq("is_active", true)
-        .single()
-
-      if (error || !data) {
-        return null
-      }
-
-      return data as BlogUser
-    } catch (error) {
-      console.error("Error fetching user:", error)
-      return null
-    }
-  }
-
-  // Get posts with role-based filtering
-  static async getPosts(userRole?: string): Promise<Post[]> {
-    try {
-      let query = supabase
+      let query = this.client
         .from("posts")
         .select(`
           *,
-          blog_users (
+          author:blog_users!posts_author_id_fkey (
+            id,
             name,
             email,
             role
@@ -99,122 +58,156 @@ export class BlogDatabase {
         `)
         .order("created_at", { ascending: false })
 
-      // If not admin/editor, only show published posts
-      if (!userRole || !["admin", "editor"].includes(userRole)) {
-        query = query.eq("published", true)
+      if (published !== undefined) {
+        query = query.eq("published", published)
       }
 
       const { data, error } = await query
 
       if (error) {
-        console.error("Error fetching posts:", error)
-        return []
+        console.error("Database error:", error)
+        throw new Error(`Failed to fetch posts: ${error.message}`)
       }
 
-      return data as Post[]
+      return data || []
     } catch (error) {
       console.error("Error fetching posts:", error)
-      return []
+      // Fallback query without author join if role column doesn't exist
+      try {
+        let fallbackQuery = this.client.from("posts").select("*").order("created_at", { ascending: false })
+
+        if (published !== undefined) {
+          fallbackQuery = fallbackQuery.eq("published", published)
+        }
+
+        const { data: fallbackData, error: fallbackError } = await fallbackQuery
+
+        if (fallbackError) {
+          throw new Error(`Fallback query failed: ${fallbackError.message}`)
+        }
+
+        return fallbackData || []
+      } catch (fallbackError) {
+        console.error("Fallback query also failed:", fallbackError)
+        return []
+      }
     }
   }
 
-  // Get single post by slug with role-based access
-  static async getPostBySlug(slug: string, userRole?: string): Promise<Post | null> {
+  async getPostBySlug(slug: string): Promise<BlogPost | null> {
     try {
-      let query = supabase
+      const { data, error } = await this.client
         .from("posts")
         .select(`
           *,
-          blog_users (
+          author:blog_users!posts_author_id_fkey (
+            id,
             name,
             email,
             role
           )
         `)
         .eq("slug", slug)
+        .single()
 
-      // If not admin/editor, only show published posts
-      if (!userRole || !["admin", "editor"].includes(userRole)) {
-        query = query.eq("published", true)
+      if (error) {
+        if (error.code === "PGRST116") {
+          return null // Post not found
+        }
+        throw new Error(`Failed to fetch post: ${error.message}`)
       }
 
-      const { data, error } = await query.single()
+      return data
+    } catch (error) {
+      console.error("Error fetching post by slug:", error)
+      // Fallback without author join
+      try {
+        const { data: fallbackData, error: fallbackError } = await this.client
+          .from("posts")
+          .select("*")
+          .eq("slug", slug)
+          .single()
 
-      if (error || !data) {
+        if (fallbackError) {
+          if (fallbackError.code === "PGRST116") {
+            return null
+          }
+          throw new Error(`Fallback query failed: ${fallbackError.message}`)
+        }
+
+        return fallbackData
+      } catch (fallbackError) {
+        console.error("Fallback query also failed:", fallbackError)
         return null
       }
-
-      return data as Post
-    } catch (error) {
-      console.error("Error fetching post:", error)
-      return null
     }
   }
 
-  // Create post (admin/editor only)
-  static async createPost(postData: Partial<Post>, authorId: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { error } = await supabase.from("posts").insert({
-        ...postData,
-        author_id: authorId,
-        slug: postData.slug || generateSlug(postData.title || ""),
-      })
+  async createPost(post: Omit<BlogPost, "id" | "created_at" | "updated_at">): Promise<BlogPost> {
+    const { data, error } = await this.client.from("posts").insert(post).select().single()
 
-      if (error) {
-        return { success: false, error: error.message }
+    if (error) {
+      throw new Error(`Failed to create post: ${error.message}`)
+    }
+
+    return data
+  }
+
+  async updatePost(id: string, updates: Partial<BlogPost>): Promise<BlogPost> {
+    const { data, error } = await this.client.from("posts").update(updates).eq("id", id).select().single()
+
+    if (error) {
+      throw new Error(`Failed to update post: ${error.message}`)
+    }
+
+    return data
+  }
+
+  async deletePost(id: string): Promise<void> {
+    const { error } = await this.client.from("posts").delete().eq("id", id)
+
+    if (error) {
+      throw new Error(`Failed to delete post: ${error.message}`)
+    }
+  }
+
+  async getUserByEmail(email: string): Promise<BlogUser | null> {
+    const { data, error } = await this.client
+      .from("blog_users")
+      .select("*")
+      .eq("email", email)
+      .eq("is_active", true)
+      .single()
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        return null // User not found
       }
-
-      return { success: true }
-    } catch (error: any) {
-      return { success: false, error: error.message }
+      throw new Error(`Failed to fetch user: ${error.message}`)
     }
+
+    return data
   }
 
-  // Update post (admin/editor only)
-  static async updatePost(postId: string, postData: Partial<Post>): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { error } = await supabase
-        .from("posts")
-        .update({
-          ...postData,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", postId)
+  async createUser(user: Omit<BlogUser, "id" | "created_at" | "updated_at">): Promise<BlogUser> {
+    const { data, error } = await this.client.from("blog_users").insert(user).select().single()
 
-      if (error) {
-        return { success: false, error: error.message }
-      }
-
-      return { success: true }
-    } catch (error: any) {
-      return { success: false, error: error.message }
+    if (error) {
+      throw new Error(`Failed to create user: ${error.message}`)
     }
+
+    return data
   }
 
-  // Delete post (admin/editor only)
-  static async deletePost(postId: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      const { error } = await supabase.from("posts").delete().eq("id", postId)
+  async updateUser(id: string, updates: Partial<BlogUser>): Promise<BlogUser> {
+    const { data, error } = await this.client.from("blog_users").update(updates).eq("id", id).select().single()
 
-      if (error) {
-        return { success: false, error: error.message }
-      }
-
-      return { success: true }
-    } catch (error: any) {
-      return { success: false, error: error.message }
+    if (error) {
+      throw new Error(`Failed to update user: ${error.message}`)
     }
-  }
 
-  // Check if user has admin/editor permissions
-  static hasAdminAccess(userRole: string): boolean {
-    return ["admin", "editor"].includes(userRole)
-  }
-
-  // Check if user can edit specific post
-  static canEditPost(userRole: string, userId: string, post: Post): boolean {
-    if (userRole === "admin") return true
-    if (userRole === "editor" && post.author_id === userId) return true
-    return false
+    return data
   }
 }
+
+export const blogDb = new BlogDatabase()

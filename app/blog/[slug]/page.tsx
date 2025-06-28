@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { BlogDatabase, formatDate } from "@/lib/supabase"
 import { BlogHeader } from "@/components/blog/blog-header"
@@ -6,7 +7,6 @@ import { Calendar, User, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import Link from "next/link"
-import type { Metadata } from "next"
 
 interface BlogPostPageProps {
   params: {
@@ -67,10 +67,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     image: post.image_urls && post.image_urls.length > 0 ? post.image_urls[0] : undefined,
     datePublished: post.created_at,
     dateModified: post.updated_at,
-    author: {
-      "@type": "Person",
-      name: post.blog_users?.name || "GCM Asesores",
-    },
+    author: post.blog_users
+      ? {
+          "@type": "Person",
+          name: post.blog_users.name,
+        }
+      : undefined,
     publisher: {
       "@type": "Organization",
       name: "GCM Asesores",
@@ -90,82 +92,105 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <div className="min-h-screen bg-white">
-        <BlogHeader />
+        <BlogHeader showBackButton={true} />
 
-        <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {/* Back Button */}
           <div className="mb-8">
             <Button variant="ghost" asChild>
               <Link href="/blog" className="flex items-center gap-2">
                 <ArrowLeft className="h-4 w-4" />
-                Volver al Blog
+                Volver al blog
               </Link>
             </Button>
           </div>
 
-          {/* Featured Image */}
-          {post.image_urls && post.image_urls.length > 0 && (
-            <div className="aspect-video relative mb-8 rounded-lg overflow-hidden">
-              <Image
-                src={post.image_urls[0] || "/placeholder.svg"}
-                alt={post.title}
-                fill
-                className="object-cover"
-                priority
-              />
-            </div>
-          )}
-
           {/* Article Header */}
-          <header className="mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">{post.title}</h1>
+          <header className="mb-12">
+            <div className="space-y-6">
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">{post.title}</h1>
 
-            {post.description && <p className="text-xl text-gray-600 mb-6 leading-relaxed">{post.description}</p>}
+              {post.description && <p className="text-xl text-gray-600 leading-relaxed">{post.description}</p>}
 
-            {/* Meta Information */}
-            <div className="flex flex-wrap items-center gap-6 text-gray-500 mb-6">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <time dateTime={post.created_at}>{formatDate(post.created_at)}</time>
+              <div className="flex flex-wrap items-center gap-6 text-gray-500">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  <time dateTime={post.created_at}>{formatDate(post.created_at)}</time>
+                </div>
+
+                {post.blog_users && (
+                  <div className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    <span>{post.blog_users.name}</span>
+                  </div>
+                )}
               </div>
 
-              {post.blog_users && (
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  <span>{post.blog_users.name}</span>
+              {post.keywords && post.keywords.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {post.keywords.map((keyword, index) => (
+                    <Badge key={index} variant="secondary">
+                      {keyword}
+                    </Badge>
+                  ))}
                 </div>
               )}
             </div>
-
-            {/* Keywords */}
-            {post.keywords && post.keywords.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {post.keywords.map((keyword, index) => (
-                  <Badge key={index} variant="secondary">
-                    {keyword}
-                  </Badge>
-                ))}
-              </div>
-            )}
           </header>
 
-          {/* Article Content */}
-          <div
-            className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 prose-strong:text-gray-900"
-            dangerouslySetInnerHTML={{ __html: post.content }}
-          />
-
-          {/* Article Footer */}
-          <footer className="mt-12 pt-8 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-500">Última actualización: {formatDate(post.updated_at)}</div>
-
-              <Button variant="outline" asChild>
-                <Link href="/blog">Ver más artículos</Link>
-              </Button>
+          {/* Featured Image */}
+          {post.image_urls && post.image_urls.length > 0 && (
+            <div className="mb-12">
+              <div className="aspect-video relative rounded-lg overflow-hidden">
+                <Image
+                  src={post.image_urls[0] || "/placeholder.svg"}
+                  alt={post.title}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              </div>
             </div>
-          </footer>
-        </article>
+          )}
+
+          {/* Article Content */}
+          <article className="prose prose-lg max-w-none">
+            <div
+              dangerouslySetInnerHTML={{ __html: post.content }}
+              className="prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 prose-strong:text-gray-900"
+            />
+          </article>
+
+          {/* Additional Images */}
+          {post.image_urls && post.image_urls.length > 1 && (
+            <div className="mt-12">
+              <h3 className="text-xl font-semibold text-gray-900 mb-6">Imágenes adicionales</h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                {post.image_urls.slice(1).map((url, index) => (
+                  <div key={index} className="aspect-video relative rounded-lg overflow-hidden">
+                    <Image
+                      src={url || "/placeholder.svg"}
+                      alt={`${post.title} - Imagen ${index + 2}`}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Call to Action */}
+          <div className="mt-16 p-8 bg-blue-50 rounded-lg text-center">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">¿Necesitas ayuda con tu LLC?</h3>
+            <p className="text-gray-600 mb-6">
+              Nuestros expertos están listos para ayudarte con todos los aspectos legales y fiscales de tu empresa.
+            </p>
+            <Button asChild size="lg">
+              <Link href="/#consultation">Solicitar consulta gratuita</Link>
+            </Button>
+          </div>
+        </main>
       </div>
     </>
   )
