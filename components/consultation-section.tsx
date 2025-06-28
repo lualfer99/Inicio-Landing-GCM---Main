@@ -87,8 +87,8 @@ Gracias,`)
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
 
-      <div className="container mx-auto px-4 lg:px-6 relative">
-        <div className="max-w-5xl mx-auto text-center">
+      <div className="container mx-auto px-4 relative">
+        <div className="max-w-6xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-full text-sm font-semibold mb-8">
             <Calendar className="w-4 h-4" />
             Agenda tu Consulta
@@ -121,7 +121,7 @@ Gracias,`)
                 style={{
                   minWidth: "100%",
                   width: "100%",
-                  height: "1000px",
+                  height: "800px",
                 }}
               />
               )}

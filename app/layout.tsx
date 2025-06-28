@@ -1,12 +1,12 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
+iimport { Poppins } from "next/font/google"
+mport "./globals.css"
 
-const inter = Inter({
+const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800", "900"],
-  variable: "--font-inter",
+  variable: "--font-poppins",
   display: "swap",
 })
 
@@ -54,7 +54,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es" className={inter.variable}>
+    <html lang="es" className={poppins.variable}>
       <head>
         <link rel="canonical" href="https://gcmasesores.io" />
         <meta name="theme-color" content="#225DF6" />
@@ -86,7 +86,10 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="font-inter antialiased bg-white text-gray-900">{children}</body>
+      <body className="font-poppins antialiased bg-white text-gray-900">{children}</body>
     </html>
   )
 }
+
+
+import './globals.css'
