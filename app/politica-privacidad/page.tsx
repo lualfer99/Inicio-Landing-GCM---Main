@@ -35,7 +35,7 @@ export default function PoliticaPrivacidadPage() {
   return (
     <div className={`${poppins.variable} min-h-screen flex flex-col bg-white text-gray-900`}>
       <OptimizedHeader />
-      <main className="flex-grow container mx-auto px-12 py-12 prose prose-lg">
+      <main className="flex-grow container mx-auto px-4 py-20 prose prose-lg">
         <h1 className="text-4xl font-bold mb-6">Política de Privacidad</h1>
 
         <section className="mb-8">
