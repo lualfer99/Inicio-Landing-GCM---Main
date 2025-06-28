@@ -1,16 +1,16 @@
 // app/page.tsx
-import type { Metadata } from "next";
-import OptimizedHeader from "@/components/optimized-header";
-import HeroSection from "@/components/hero-section";
-import StatsSection from "@/components/stats-section";
-import OptimizedTestimonialsSection from "@/components/optimized-testimonials-section";
-import BenefitsSection from "@/components/benefits-section";
-import ServicesSection from "@/components/services-section";
-import ProcessSection from "@/components/process-section";
-import FAQSection from "@/components/faq-section";
-import ConsultationSection from "@/components/consultation-section";
-import OptimizedFooter from "@/components/optimized-footer";
-import { Poppins } from "next/font/google";
+import type { Metadata } from "next"
+import OptimizedHeader from "@/components/optimized-header"
+import HeroSection from "@/components/hero-section"
+import StatsSection from "@/components/stats-section"
+import OptimizedTestimonialsSection from "@/components/optimized-testimonials-section"
+import BenefitsSection from "@/components/benefits-section"
+import ServicesSection from "@/components/services-section"
+import ProcessSection from "@/components/process-section"
+import FAQSection from "@/components/faq-section"
+import ConsultationSection from "@/components/consultation-section"
+import OptimizedFooter from "@/components/optimized-footer"
+import { Poppins } from "next/font/google"
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -61,15 +61,11 @@ export const metadata: Metadata = {
     description: "Especialistas en creación y gestión fiscal de LLCs para emprendedores digitales.",
     images: ["https://gcmasesores.io/twitter-home.jpg"]
   }
-};
+}
 
 export default function HomePage() {
   return (
     <div className={`${poppins.variable} min-h-screen flex flex-col bg-white text-gray-900`}>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="" />
-        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-      </head>
       <OptimizedHeader />
       <main className="flex-grow">
         <HeroSection />
@@ -83,5 +79,5 @@ export default function HomePage() {
       </main>
       <OptimizedFooter />
     </div>
-  );
+  )
 }
