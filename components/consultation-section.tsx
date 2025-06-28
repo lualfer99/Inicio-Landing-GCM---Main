@@ -114,8 +114,8 @@ Gracias,`)
                   className="calendly-inline-widget"
                   data-url="https://calendly.com/d/cncj-m4f-7xt/consulta-fiscal-para-crear-una-llc"
                   style={{
-                    minWidth: "320px",
-                    height: "700px",
+                    minWidth: "420px",
+                    height: "800px",
                     width: "100%",
                     maxWidth: "100%",
                   }}
