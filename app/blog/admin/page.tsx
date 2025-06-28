@@ -3,134 +3,218 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { supabase, type Post, type BlogUser, generateSlug } from "@/lib/supabase"
-import { loginUser } from "@/lib/auth"
-import { BlogHeader } from "@/components/blog/blog-header"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { AuthService, SessionManager, type UserSession } from "@/lib/auth"
+import { BlogDatabase, generateSlug, formatDate, type Post } from "@/lib/supabase"
 import { WysiwygEditor } from "@/components/blog/wysiwyg-editor"
 import { MediaLibrary } from "@/components/blog/media-library"
 import { KeywordsInput } from "@/components/blog/keywords-input"
-import { Plus, Edit, Trash2, Eye, Save, X, LogOut, Calendar, User } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
+import { BlogHeader } from "@/components/blog/blog-header"
+import { toast } from "@/hooks/use-toast"
+import { LogIn, Plus, Edit, Trash2, Eye, EyeOff, Save, ImageIcon, Calendar, User, Settings } from "lucide-react"
 
-export default function BlogAdminPage() {
-  const [user, setUser] = useState<BlogUser | null>(null)
+interface PostFormData {
+  title: string
+  slug: string
+  description: string
+  content: string
+  image_urls: string[]
+  keywords: string[]
+  published: boolean
+  featured: boolean
+}
+
+export default function AdminPage() {
+  const router = useRouter()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [userSession, setUserSession] = useState<UserSession | null>(null)
+  const [loading, setLoading] = useState(true)
   const [posts, setPosts] = useState<Post[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [editingPost, setEditingPost] = useState<Post | null>(null)
-  const [isCreating, setIsCreating] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [formData, setFormData] = useState({
-    title: "",
-    slug: "",
-    description: "",
-    content: "",
-    image_urls: [] as string[],
-    keywords: [] as string[],
-    published: false,
-  })
+  const [showLoginForm, setShowLoginForm] = useState(false)
+
+  // Login form state
   const [loginData, setLoginData] = useState({
     email: "",
     password: "",
   })
-  const [loginError, setLoginError] = useState("")
+
+  // Post form state
+  const [postForm, setPostForm] = useState<PostFormData>({
+    title: "",
+    slug: "",
+    description: "",
+    content: "",
+    image_urls: [],
+    keywords: [],
+    published: false,
+    featured: false,
+  })
 
   useEffect(() => {
-    checkAuth()
+    checkAuthentication()
   }, [])
 
   useEffect(() => {
-    if (user) {
-      fetchPosts()
+    if (isAuthenticated) {
+      loadPosts()
     }
-  }, [user])
+  }, [isAuthenticated])
 
+  // Auto-generate slug when title changes
   useEffect(() => {
-    if (formData.title && !editingPost) {
-      setFormData((prev) => ({ ...prev, slug: generateSlug(prev.title) }))
+    if (postForm.title && !editingPost) {
+      setPostForm((prev) => ({
+        ...prev,
+        slug: generateSlug(prev.title),
+      }))
     }
-  }, [formData.title, editingPost])
+  }, [postForm.title, editingPost])
 
-  const checkAuth = () => {
-    const userData = localStorage.getItem("blog_user")
-    if (userData) {
-      try {
-        setUser(JSON.parse(userData))
-      } catch (error) {
-        localStorage.removeItem("blog_user")
-      }
+  const checkAuthentication = () => {
+    const session = SessionManager.getSession()
+    const authenticated = SessionManager.isAuthenticated()
+
+    setIsAuthenticated(authenticated)
+    setUserSession(session)
+    setLoading(false)
+
+    if (!authenticated || !SessionManager.hasEditorAccess()) {
+      setShowLoginForm(true)
     }
-    setIsLoading(false)
+  }
+
+  const loadPosts = async () => {
+    try {
+      const userRole = userSession?.role || "subscriber"
+      const allPosts = await BlogDatabase.getPosts(userRole)
+      setPosts(allPosts)
+    } catch (error) {
+      console.error("Error loading posts:", error)
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los posts",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoginError("")
+    setLoading(true)
 
     try {
-      const result = await loginUser(loginData.email, loginData.password)
+      const result = await AuthService.authenticate(loginData.email, loginData.password)
 
       if (result.success && result.user) {
-        localStorage.setItem("blog_user", JSON.stringify(result.user))
-        setUser(result.user)
+        if (!AuthService.hasEditorAccess(result.user)) {
+          toast({
+            title: "Acceso denegado",
+            description: "No tienes permisos para acceder al panel de administración",
+            variant: "destructive",
+          })
+          return
+        }
+
+        SessionManager.setSession(result.user)
+        setIsAuthenticated(true)
+        setUserSession({
+          id: result.user.id,
+          email: result.user.email,
+          name: result.user.name,
+          role: result.user.role,
+          isActive: result.user.is_active,
+        })
+        setShowLoginForm(false)
+
+        toast({
+          title: "Bienvenido",
+          description: `Hola ${result.user.name}`,
+        })
       } else {
-        setLoginError(result.error || "Invalid credentials")
+        toast({
+          title: "Error de autenticación",
+          description: result.error || "Credenciales inválidas",
+          variant: "destructive",
+        })
       }
     } catch (error) {
-      setLoginError("Login failed")
+      console.error("Login error:", error)
+      toast({
+        title: "Error",
+        description: "Error al iniciar sesión",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem("blog_user")
-    setUser(null)
-  }
-
-  const fetchPosts = async () => {
-    const { data, error } = await supabase
-      .from("posts")
-      .select(`
-        *,
-        blog_users (
-          name,
-          email,
-          role
-        )
-      `)
-      .order("created_at", { ascending: false })
-
-    if (error) {
-      console.error("Error fetching posts:", error)
+  const handleSavePost = async () => {
+    if (!postForm.title.trim() || !postForm.content.trim()) {
+      toast({
+        title: "Campos requeridos",
+        description: "El título y contenido son obligatorios",
+        variant: "destructive",
+      })
       return
     }
 
-    setPosts(data || [])
-  }
+    if (!userSession) return
 
-  const handleCreatePost = () => {
-    setIsCreating(true)
-    setEditingPost(null)
-    setFormData({
-      title: "",
-      slug: "",
-      description: "",
-      content: "",
-      image_urls: [],
-      keywords: [],
-      published: false,
-    })
+    setLoading(true)
+    try {
+      if (editingPost) {
+        // Update existing post
+        const result = await BlogDatabase.updatePost(editingPost.id, postForm)
+        if (result.success) {
+          toast({
+            title: "Post actualizado",
+            description: "El artículo se actualizó correctamente",
+          })
+          resetForm()
+          loadPosts()
+        } else {
+          throw new Error(result.error)
+        }
+      } else {
+        // Create new post
+        const result = await BlogDatabase.createPost(postForm, userSession.id)
+        if (result.success) {
+          toast({
+            title: "Post creado",
+            description: "El artículo se creó correctamente",
+          })
+          resetForm()
+          loadPosts()
+        } else {
+          throw new Error(result.error)
+        }
+      }
+    } catch (error: any) {
+      console.error("Save error:", error)
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo guardar el post",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleEditPost = (post: Post) => {
     setEditingPost(post)
-    setIsCreating(false)
-    setFormData({
+    setPostForm({
       title: post.title,
       slug: post.slug,
       description: post.description || "",
@@ -138,79 +222,37 @@ export default function BlogAdminPage() {
       image_urls: post.image_urls || [],
       keywords: post.keywords || [],
       published: post.published,
+      featured: post.featured || false,
     })
   }
 
-  const handleSavePost = async () => {
-    if (!formData.title.trim() || !formData.content.trim()) {
-      alert("Title and content are required")
-      return
-    }
-
-    setIsSaving(true)
-
-    try {
-      if (editingPost) {
-        const { error } = await supabase
-          .from("posts")
-          .update({
-            title: formData.title,
-            slug: formData.slug,
-            description: formData.description,
-            content: formData.content,
-            image_urls: formData.image_urls,
-            keywords: formData.keywords,
-            published: formData.published,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", editingPost.id)
-
-        if (error) throw error
-      } else {
-        const { error } = await supabase.from("posts").insert({
-          title: formData.title,
-          slug: formData.slug,
-          description: formData.description,
-          content: formData.content,
-          image_urls: formData.image_urls,
-          keywords: formData.keywords,
-          published: formData.published,
-          author_id: user?.id,
-        })
-
-        if (error) throw error
-      }
-
-      setEditingPost(null)
-      setIsCreating(false)
-      fetchPosts()
-    } catch (error: any) {
-      console.error("Error saving post:", error)
-      alert(`Error saving post: ${error.message}`)
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
   const handleDeletePost = async (postId: string) => {
-    if (!confirm("Are you sure you want to delete this post?")) return
+    if (!confirm("¿Estás seguro de que quieres eliminar este post?")) return
 
     try {
-      const { error } = await supabase.from("posts").delete().eq("id", postId)
-
-      if (error) throw error
-
-      fetchPosts()
-    } catch (error) {
-      console.error("Error deleting post:", error)
-      alert("Error deleting post")
+      const result = await BlogDatabase.deletePost(postId)
+      if (result.success) {
+        toast({
+          title: "Post eliminado",
+          description: "El artículo se eliminó correctamente",
+        })
+        loadPosts()
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error: any) {
+      console.error("Delete error:", error)
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo eliminar el post",
+        variant: "destructive",
+      })
     }
   }
 
-  const handleCancel = () => {
+  const resetForm = () => {
     setEditingPost(null)
-    setIsCreating(false)
-    setFormData({
+    setPostForm({
       title: "",
       slug: "",
       description: "",
@@ -218,28 +260,46 @@ export default function BlogAdminPage() {
       image_urls: [],
       keywords: [],
       published: false,
+      featured: false,
     })
   }
 
-  if (isLoading) {
+  const handleImageSelect = (url: string) => {
+    setPostForm((prev) => ({
+      ...prev,
+      image_urls: [...prev.image_urls, url],
+    }))
+  }
+
+  const removeImage = (index: number) => {
+    setPostForm((prev) => ({
+      ...prev,
+      image_urls: prev.image_urls.filter((_, i) => i !== index),
+    }))
+  }
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Cargando...</p>
+        </div>
       </div>
     )
   }
 
-  if (!user) {
+  if (!isAuthenticated || showLoginForm) {
     return (
       <div className="min-h-screen bg-gray-50">
         <BlogHeader />
         <div className="flex items-center justify-center py-16">
-          <Card className="w-full max-w-md shadow-lg">
-            <CardHeader className="text-center">
-              <div className="flex justify-center mb-4">
-                <Image src="/images/logo.png" alt="GCM Asesores" width={120} height={40} className="h-10 w-auto" />
-              </div>
-              <CardTitle className="text-2xl">Blog Admin Login</CardTitle>
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="text-center flex items-center justify-center gap-2">
+                <LogIn className="h-5 w-5" />
+                Iniciar Sesión
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleLogin} className="space-y-4">
@@ -249,29 +309,28 @@ export default function BlogAdminPage() {
                     id="email"
                     type="email"
                     value={loginData.email}
-                    onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                    placeholder="info@gcmasesores.io"
+                    onChange={(e) => setLoginData((prev) => ({ ...prev, email: e.target.value }))}
                     required
-                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">Contraseña</Label>
                   <Input
                     id="password"
                     type="password"
                     value={loginData.password}
-                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                    placeholder="Enter password"
+                    onChange={(e) => setLoginData((prev) => ({ ...prev, password: e.target.value }))}
                     required
-                    className="mt-1"
                   />
                 </div>
-                {loginError && <p className="text-red-600 text-sm">{loginError}</p>}
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                  Login
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
                 </Button>
-                <div className="text-xs text-gray-500 space-y-1">
+              </form>
+
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                <p className="text-sm font-medium text-blue-900 mb-2">Credenciales de prueba:</p>
+                <div className="text-xs text-blue-700 space-y-1">
                   <p>
                     <strong>Admin:</strong> info@gcmasesores.io / GCMAsesores2025@!*
                   </p>
@@ -279,143 +338,9 @@ export default function BlogAdminPage() {
                     <strong>Editor:</strong> editor@gcmasesores.io / Editor2025@!*
                   </p>
                 </div>
-              </form>
+              </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
-    )
-  }
-
-  if (isCreating || editingPost) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <BlogHeader />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
-              <h1 className="text-3xl font-bold text-gray-900">{editingPost ? "Edit Post" : "Create New Post"}</h1>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                onClick={handleSavePost}
-                disabled={isSaving}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-              >
-                <Save className="h-4 w-4" />
-                {isSaving ? "Saving..." : "Save"}
-              </Button>
-              <Button variant="outline" onClick={handleCancel} className="flex items-center gap-2 bg-transparent">
-                <X className="h-4 w-4" />
-                Cancel
-              </Button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Post Content</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <Label htmlFor="title">Title *</Label>
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      placeholder="Enter post title"
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="slug">Slug *</Label>
-                    <Input
-                      id="slug"
-                      value={formData.slug}
-                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                      placeholder="post-url-slug"
-                      className="mt-1"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Auto-generated from title, but you can customize it</p>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="description">Meta Description</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Enter SEO meta description (recommended 150-160 characters)"
-                      rows={3}
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Content *</Label>
-                    <div className="mt-1">
-                      <WysiwygEditor
-                        value={formData.content}
-                        onChange={(content) => setFormData({ ...formData, content })}
-                        placeholder="Write your blog post content here..."
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Post Settings</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="published"
-                      checked={formData.published}
-                      onCheckedChange={(checked) => setFormData({ ...formData, published: checked })}
-                    />
-                    <Label htmlFor="published" className="font-medium">
-                      {formData.published ? "Published" : "Draft"}
-                    </Label>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Media Library</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <MediaLibrary
-                    selectedImages={formData.image_urls}
-                    onImagesChange={(images) => setFormData({ ...formData, image_urls: images })}
-                    multiple={true}
-                  />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>SEO Keywords</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <KeywordsInput
-                    value={formData.keywords}
-                    onChange={(keywords) => setFormData({ ...formData, keywords })}
-                    placeholder="Add SEO keywords"
-                  />
-                </CardContent>
-              </Card>
-            </div>
-          </div>
         </div>
       </div>
     )
@@ -424,130 +349,244 @@ export default function BlogAdminPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogHeader />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-bold text-gray-900">Blog Admin</h1>
-            <div className="text-sm text-gray-500">
-              Welcome, {user.name} ({user.role})
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <Button onClick={handleCreatePost} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4" />
-              New Post
-            </Button>
-            <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 bg-transparent">
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Panel de Administración</h1>
+          <p className="text-gray-600">Gestiona el contenido del blog de GCM Asesores</p>
         </div>
 
-        <div className="grid gap-6">
-          {posts.map((post) => (
-            <Card key={post.id} className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex gap-4 flex-1">
-                    {/* Thumbnail */}
-                    {post.image_urls && post.image_urls.length > 0 && (
-                      <div className="flex-shrink-0">
-                        <Image
-                          src={post.image_urls[0] || "/placeholder.svg"}
-                          alt={post.title}
-                          width={120}
-                          height={80}
-                          className="w-30 h-20 object-cover rounded border"
-                        />
-                      </div>
-                    )}
+        <Tabs defaultValue="posts" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="posts">Posts</TabsTrigger>
+            <TabsTrigger value="editor">Editor</TabsTrigger>
+            <TabsTrigger value="media">Medios</TabsTrigger>
+          </TabsList>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-3">
-                        <h3 className="text-xl font-bold text-gray-900 truncate">{post.title}</h3>
-                        {post.published ? (
-                          <span className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full font-medium">
-                            Published
-                          </span>
-                        ) : (
-                          <span className="px-3 py-1 bg-gray-100 text-gray-800 text-sm rounded-full font-medium">
-                            Draft
-                          </span>
-                        )}
-                      </div>
+          <TabsContent value="posts" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Todos los Posts</h2>
+              <Button onClick={() => resetForm()}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Post
+              </Button>
+            </div>
 
-                      {post.description && <p className="text-gray-600 mb-3 line-clamp-2">{post.description}</p>}
+            <div className="grid gap-4">
+              {posts.map((post) => (
+                <Card key={post.id}>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-lg font-semibold">{post.title}</h3>
+                          {post.published ? (
+                            <Badge variant="default">
+                              <Eye className="h-3 w-3 mr-1" />
+                              Publicado
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">
+                              <EyeOff className="h-3 w-3 mr-1" />
+                              Borrador
+                            </Badge>
+                          )}
+                          {post.featured && <Badge variant="outline">Destacado</Badge>}
+                        </div>
 
-                      {post.keywords && post.keywords.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-3">
-                          {post.keywords.slice(0, 5).map((keyword, index) => (
-                            <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
-                              {keyword}
-                            </span>
-                          ))}
-                          {post.keywords.length > 5 && (
-                            <span className="text-xs text-gray-500">+{post.keywords.length - 5} more</span>
+                        {post.description && <p className="text-gray-600 mb-3">{post.description}</p>}
+
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            {formatDate(post.created_at)}
+                          </div>
+                          {post.blog_users && (
+                            <div className="flex items-center gap-1">
+                              <User className="h-4 w-4" />
+                              {post.blog_users.name}
+                            </div>
                           )}
                         </div>
-                      )}
+                      </div>
 
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          {new Date(post.created_at).toLocaleDateString()}
-                        </div>
-                        {post.blog_users && (
-                          <div className="flex items-center gap-1">
-                            <User className="h-4 w-4" />
-                            {post.blog_users.name}
-                          </div>
-                        )}
-                        {post.updated_at !== post.created_at && (
-                          <span>• Updated: {new Date(post.updated_at).toLocaleDateString()}</span>
-                        )}
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleEditPost(post)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleDeletePost(post.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
-                  </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 ml-4">
-                    {post.published && (
-                      <Button variant="outline" size="sm" asChild className="hover:bg-blue-50 bg-transparent">
-                        <Link href={`/blog/${post.slug}`} target="_blank">
-                          <Eye className="h-4 w-4" />
-                        </Link>
-                      </Button>
+          <TabsContent value="editor" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">{editingPost ? "Editar Post" : "Crear Nuevo Post"}</h2>
+              {editingPost && (
+                <Button variant="outline" onClick={resetForm}>
+                  Cancelar
+                </Button>
+              )}
+            </div>
+
+            <div className="grid lg:grid-cols-3 gap-6">
+              {/* Main Editor */}
+              <div className="lg:col-span-2 space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Contenido</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="title">Título</Label>
+                      <Input
+                        id="title"
+                        value={postForm.title}
+                        onChange={(e) => setPostForm((prev) => ({ ...prev, title: e.target.value }))}
+                        placeholder="Título del artículo"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="slug">Slug (URL)</Label>
+                      <Input
+                        id="slug"
+                        value={postForm.slug}
+                        onChange={(e) => setPostForm((prev) => ({ ...prev, slug: e.target.value }))}
+                        placeholder="url-del-articulo"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="description">Descripción</Label>
+                      <Textarea
+                        id="description"
+                        value={postForm.description}
+                        onChange={(e) => setPostForm((prev) => ({ ...prev, description: e.target.value }))}
+                        placeholder="Breve descripción del artículo"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Contenido</Label>
+                      <WysiwygEditor
+                        content={postForm.content}
+                        onChange={(content) => setPostForm((prev) => ({ ...prev, content }))}
+                        onImageUpload={() => {
+                          // This could open the media library
+                        }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Sidebar */}
+              <div className="space-y-6">
+                {/* Publish Settings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      Configuración
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="published">Publicado</Label>
+                      <Switch
+                        id="published"
+                        checked={postForm.published}
+                        onCheckedChange={(checked) => setPostForm((prev) => ({ ...prev, published: checked }))}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="featured">Destacado</Label>
+                      <Switch
+                        id="featured"
+                        checked={postForm.featured}
+                        onCheckedChange={(checked) => setPostForm((prev) => ({ ...prev, featured: checked }))}
+                      />
+                    </div>
+
+                    <Separator />
+
+                    <Button onClick={handleSavePost} className="w-full" disabled={loading}>
+                      <Save className="h-4 w-4 mr-2" />
+                      {loading ? "Guardando..." : editingPost ? "Actualizar" : "Crear Post"}
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Images */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ImageIcon className="h-4 w-4" />
+                      Imágenes
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <MediaLibrary
+                      onSelectImage={handleImageSelect}
+                      trigger={
+                        <Button variant="outline" className="w-full bg-transparent">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Agregar Imagen
+                        </Button>
+                      }
+                    />
+
+                    {postForm.image_urls.length > 0 && (
+                      <div className="space-y-2">
+                        {postForm.image_urls.map((url, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 border rounded">
+                            <span className="text-sm truncate">{url.split("/").pop()}</span>
+                            <Button variant="ghost" size="sm" onClick={() => removeImage(index)}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
                     )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditPost(post)}
-                      className="hover:bg-blue-50"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDeletePost(post.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
+
+                {/* Keywords */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Palabras Clave</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <KeywordsInput
+                      keywords={postForm.keywords}
+                      onChange={(keywords) => setPostForm((prev) => ({ ...prev, keywords }))}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="media">
+            <Card>
+              <CardHeader>
+                <CardTitle>Biblioteca de Medios</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MediaLibrary />
               </CardContent>
             </Card>
-          ))}
-        </div>
-
-        {posts.length === 0 && (
-          <div className="text-center py-16">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">No posts yet</h2>
-            <p className="text-gray-600 mb-8">Create your first blog post to get started.</p>
-            <Button onClick={handleCreatePost} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="mr-2 h-4 w-4" />
-              Create First Post
-            </Button>
-          </div>
-        )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   )

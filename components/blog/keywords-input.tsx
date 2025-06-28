@@ -3,19 +3,20 @@
 import { useState, type KeyboardEvent } from "react"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { X } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { X, Plus } from "lucide-react"
 
 interface KeywordsInputProps {
-  value: string[]
+  keywords: string[]
   onChange: (keywords: string[]) => void
   placeholder?: string
   maxKeywords?: number
 }
 
 export function KeywordsInput({
-  value,
+  keywords,
   onChange,
-  placeholder = "Add keywords...",
+  placeholder = "Agregar palabra clave...",
   maxKeywords = 10,
 }: KeywordsInputProps) {
   const [inputValue, setInputValue] = useState("")
@@ -23,66 +24,79 @@ export function KeywordsInput({
   const addKeyword = (keyword: string) => {
     const trimmedKeyword = keyword.trim().toLowerCase()
 
-    if (trimmedKeyword && !value.includes(trimmedKeyword) && value.length < maxKeywords) {
-      onChange([...value, trimmedKeyword])
-      setInputValue("")
-    }
+    if (!trimmedKeyword) return
+    if (keywords.includes(trimmedKeyword)) return
+    if (keywords.length >= maxKeywords) return
+
+    onChange([...keywords, trimmedKeyword])
+    setInputValue("")
   }
 
   const removeKeyword = (keywordToRemove: string) => {
-    onChange(value.filter((keyword) => keyword !== keywordToRemove))
+    onChange(keywords.filter((keyword) => keyword !== keywordToRemove))
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === ",") {
+    if (e.key === "Enter") {
       e.preventDefault()
       addKeyword(inputValue)
-    } else if (e.key === "Backspace" && inputValue === "" && value.length > 0) {
-      removeKeyword(value[value.length - 1])
+    } else if (e.key === "Backspace" && !inputValue && keywords.length > 0) {
+      // Remove last keyword when backspace is pressed on empty input
+      removeKeyword(keywords[keywords.length - 1])
     }
   }
 
-  const handleInputBlur = () => {
-    if (inputValue.trim()) {
-      addKeyword(inputValue)
-    }
+  const handleAddClick = () => {
+    addKeyword(inputValue)
   }
 
   return (
     <div className="space-y-3">
-      <Input
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={handleInputBlur}
-        placeholder={value.length >= maxKeywords ? `Max ${maxKeywords} keywords` : placeholder}
-        disabled={value.length >= maxKeywords}
-        className="w-full"
-      />
-
-      {value.length > 0 && (
+      {/* Keywords Display */}
+      {keywords.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {value.map((keyword, index) => (
-            <Badge
-              key={index}
-              variant="secondary"
-              className="flex items-center gap-1 bg-blue-100 text-blue-800 hover:bg-blue-200"
-            >
+          {keywords.map((keyword, index) => (
+            <Badge key={index} variant="secondary" className="flex items-center gap-1 px-2 py-1">
               {keyword}
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
+                className="h-auto p-0 hover:bg-transparent"
                 onClick={() => removeKeyword(keyword)}
-                className="ml-1 hover:bg-blue-300 rounded-full p-0.5"
               >
                 <X className="h-3 w-3" />
-              </button>
+              </Button>
             </Badge>
           ))}
         </div>
       )}
 
+      {/* Input */}
+      <div className="flex gap-2">
+        <Input
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={keywords.length >= maxKeywords ? `Máximo ${maxKeywords} palabras clave` : placeholder}
+          disabled={keywords.length >= maxKeywords}
+          className="flex-1"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleAddClick}
+          disabled={!inputValue.trim() || keywords.length >= maxKeywords}
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Helper Text */}
       <p className="text-xs text-gray-500">
-        {value.length}/{maxKeywords} keywords • Press Enter or comma to add
+        {keywords.length}/{maxKeywords} palabras clave. Presiona Enter o haz clic en + para agregar.
       </p>
     </div>
   )

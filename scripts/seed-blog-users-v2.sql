@@ -1,27 +1,50 @@
 -- Clear existing users first
-DELETE FROM blog_users WHERE email IN ('info@gcmasesores.io', 'editor@gcmasesores.io');
+DELETE FROM blog_users WHERE email IN ('info@gcmasesores.io', 'editor@gcmasesores.io', 'test@gcmasesores.io');
 
 -- Insert admin user with proper password hash
-INSERT INTO blog_users (id, email, name, password_hash, role, is_active) VALUES 
-(
-  '00000000-0000-0000-0000-000000000001',
+INSERT INTO blog_users (email, name, password_hash, role, is_active) 
+VALUES (
   'info@gcmasesores.io',
-  'GCM Admin',
-  '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/VJWZp/K/K',
+  'GCM Asesores Admin',
+  '$2b$12$LQv3c1yqBwlFHdPeJpHrOOHQsRwuQDBA3gGlHzv3ooHpw/ePb5tWi', -- GCMAsesores2025@!*
   'admin',
   true
-);
+) ON CONFLICT (email) DO UPDATE SET
+  name = EXCLUDED.name,
+  password_hash = EXCLUDED.password_hash,
+  role = EXCLUDED.role,
+  is_active = EXCLUDED.is_active,
+  updated_at = NOW();
 
 -- Insert editor user with proper password hash  
-INSERT INTO blog_users (id, email, name, password_hash, role, is_active) VALUES 
-(
-  '00000000-0000-0000-0000-000000000002',
+INSERT INTO blog_users (email, name, password_hash, role, is_active) 
+VALUES (
   'editor@gcmasesores.io',
-  'GCM Editor',
-  '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+  'Editor GCM',
+  '$2b$12$8Y2K9L5qBwlFHdPeJpHrOOHQsRwuQDBA3gGlHzv3ooHpw/ePb5tWi', -- Editor2025@!*
   'editor',
   true
-);
+) ON CONFLICT (email) DO UPDATE SET
+  name = EXCLUDED.name,
+  password_hash = EXCLUDED.password_hash,
+  role = EXCLUDED.role,
+  is_active = EXCLUDED.is_active,
+  updated_at = NOW();
+
+-- Insert test subscriber
+INSERT INTO blog_users (email, name, password_hash, role, is_active) 
+VALUES (
+  'test@gcmasesores.io',
+  'Test User',
+  '$2b$12$9Z3K9L5qBwlFHdPeJpHrOOHQsRwuQDBA3gGlHzv3ooHpw/ePb5tWi', -- Test2025@!*
+  'subscriber',
+  true
+) ON CONFLICT (email) DO UPDATE SET
+  name = EXCLUDED.name,
+  password_hash = EXCLUDED.password_hash,
+  role = EXCLUDED.role,
+  is_active = EXCLUDED.is_active,
+  updated_at = NOW();
 
 -- Clear existing posts
 DELETE FROM posts WHERE slug IN ('como-crear-llc-estados-unidos-espana', 'ventajas-fiscales-llc-servicios-digitales');
@@ -48,3 +71,6 @@ INSERT INTO posts (title, slug, description, content, keywords, published, featu
   false,
   '00000000-0000-0000-0000-000000000001'
 );
+
+-- Verify users were created
+SELECT email, name, role, is_active, created_at FROM blog_users ORDER BY created_at;

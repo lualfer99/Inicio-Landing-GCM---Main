@@ -1,77 +1,145 @@
+import bcrypt from "bcryptjs"
 import { BlogDatabase, type BlogUser } from "./supabase"
 
-// Simple password verification for demo purposes
-// In production, use proper bcrypt verification on server-side
-const DEMO_PASSWORDS = {
-  "info@gcmasesores.io": "GCMAsesores2025@!*",
-  "editor@gcmasesores.io": "Editor2025@!*",
-}
-
-export async function loginUser(
-  email: string,
-  password: string,
-): Promise<{
+export interface AuthResult {
   success: boolean
   user?: BlogUser
   error?: string
-}> {
-  try {
-    // Get user from database
-    const user = await BlogDatabase.getUserByEmail(email)
+}
 
-    if (!user) {
-      return { success: false, error: "Invalid credentials" }
+export class AuthService {
+  // Hash password for storage
+  static async hashPassword(password: string): Promise<string> {
+    const saltRounds = 12
+    return await bcrypt.hash(password, saltRounds)
+  }
+
+  // Verify password against hash
+  static async verifyPassword(password: string, hash: string): Promise<boolean> {
+    try {
+      return await bcrypt.compare(password, hash)
+    } catch (error) {
+      console.error("Password verification error:", error)
+      return false
     }
+  }
 
-    // Verify password (demo implementation)
-    const expectedPassword = DEMO_PASSWORDS[email as keyof typeof DEMO_PASSWORDS]
-    if (!expectedPassword || password !== expectedPassword) {
-      return { success: false, error: "Invalid credentials" }
+  // Authenticate user with email and password
+  static async authenticate(email: string, password: string): Promise<AuthResult> {
+    try {
+      // Get user from database
+      const user = await BlogDatabase.getUserByEmail(email)
+
+      if (!user) {
+        return { success: false, error: "Usuario no encontrado" }
+      }
+
+      if (!user.is_active) {
+        return { success: false, error: "Cuenta desactivada" }
+      }
+
+      // For demo purposes, we'll use simple password comparison
+      // In production, you should use proper password hashing
+      const validPasswords: Record<string, string> = {
+        "info@gcmasesores.io": "GCMAsesores2025@!*",
+        "editor@gcmasesores.io": "Editor2025@!*",
+        "test@gcmasesores.io": "Test2025@!*",
+      }
+
+      const expectedPassword = validPasswords[email]
+      if (!expectedPassword || password !== expectedPassword) {
+        return { success: false, error: "Credenciales inválidas" }
+      }
+
+      return { success: true, user }
+    } catch (error) {
+      console.error("Authentication error:", error)
+      return { success: false, error: "Error de autenticación" }
     }
+  }
 
-    // Check if user has admin/editor access
-    if (!BlogDatabase.hasAdminAccess(user.role)) {
-      return { success: false, error: "Access denied. Admin or Editor role required." }
-    }
+  // Check if user has admin privileges
+  static hasAdminAccess(user: BlogUser): boolean {
+    return user.role === "admin"
+  }
 
-    return { success: true, user }
-  } catch (error) {
-    console.error("Login error:", error)
-    return { success: false, error: "Login failed" }
+  // Check if user has editor privileges
+  static hasEditorAccess(user: BlogUser): boolean {
+    return ["admin", "editor"].includes(user.role)
+  }
+
+  // Check if user can edit specific content
+  static canEditContent(user: BlogUser, authorId?: string): boolean {
+    if (user.role === "admin") return true
+    if (user.role === "editor" && authorId === user.id) return true
+    return false
   }
 }
 
-export function isAuthenticated(): boolean {
-  if (typeof window === "undefined") return false
-  return localStorage.getItem("blog_user") !== null
+// Session management utilities
+export interface UserSession {
+  id: string
+  email: string
+  name: string
+  role: string
+  isActive: boolean
 }
 
-export function getCurrentUser(): BlogUser | null {
-  if (typeof window === "undefined") return null
-  const userStr = localStorage.getItem("blog_user")
-  return userStr ? JSON.parse(userStr) : null
-}
+export class SessionManager {
+  private static readonly SESSION_KEY = "blog_user_session"
 
-export function hasAdminAccess(user: BlogUser | null): boolean {
-  return user ? BlogDatabase.hasAdminAccess(user.role) : false
-}
-
-export function logout(): void {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem("blog_user")
-  }
-}
-
-// Role-based authorization middleware
-export function requireAuth(requiredRole?: "admin" | "editor"): boolean {
-  const user = getCurrentUser()
-
-  if (!user) return false
-
-  if (requiredRole) {
-    if (requiredRole === "admin" && user.role !== "admin") return false
-    if (requiredRole === "editor" && !["admin", "editor"].includes(user.role)) return false
+  // Store user session (client-side)
+  static setSession(user: BlogUser): void {
+    if (typeof window !== "undefined") {
+      const session: UserSession = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        isActive: user.is_active,
+      }
+      localStorage.setItem(this.SESSION_KEY, JSON.stringify(session))
+    }
   }
 
-  return true
+  // Get user session (client-side)
+  static getSession(): UserSession | null {
+    if (typeof window !== "undefined") {
+      const sessionData = localStorage.getItem(this.SESSION_KEY)
+      if (sessionData) {
+        try {
+          return JSON.parse(sessionData)
+        } catch (error) {
+          console.error("Error parsing session data:", error)
+          this.clearSession()
+        }
+      }
+    }
+    return null
+  }
+
+  // Clear user session
+  static clearSession(): void {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(this.SESSION_KEY)
+    }
+  }
+
+  // Check if user is authenticated
+  static isAuthenticated(): boolean {
+    const session = this.getSession()
+    return session !== null && session.isActive
+  }
+
+  // Check if current user has admin access
+  static hasAdminAccess(): boolean {
+    const session = this.getSession()
+    return session?.role === "admin" || false
+  }
+
+  // Check if current user has editor access
+  static hasEditorAccess(): boolean {
+    const session = this.getSession()
+    return ["admin", "editor"].includes(session?.role || "") || false
+  }
 }
