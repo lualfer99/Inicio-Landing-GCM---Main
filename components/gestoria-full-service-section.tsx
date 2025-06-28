@@ -67,13 +67,15 @@ export default function GestoriaFullServiceSection() {
             </Button>
           </div>
 
-          {/* Right Content - Image */}
+          {/* Right Content - Professional Building Image */}
           <div className="flex justify-center lg:justify-end">
             <div className="relative">
               <img
-                src="/placeholder.svg?height=500&width=600"
-                alt="Oficina profesional"
-                className="rounded-3xl shadow-2xl border-4 border-white"
+                src="/images/professional-building.jpg"
+                alt="Edificio corporativo profesional - Gestión de LLCs"
+                className="rounded-3xl shadow-2xl border-4 border-white w-full max-w-md lg:max-w-lg h-auto object-cover"
+                width={600}
+                height={500}
               />
               <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
                 <div className="flex items-center gap-3">

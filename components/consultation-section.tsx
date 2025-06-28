@@ -1,68 +1,46 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Calendar, Clock, Shield, CheckCircle, MessageCircle, Phone, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-declare global {
-  interface Window {
-    Calendly: any
-  }
-}
-
 export default function ConsultationSection() {
-  const [isCalendlyLoaded, setIsCalendlyLoaded] = useState(false)
   const [showFallback, setShowFallback] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const isLoadingRef = useRef(true) // 🔁 Referencia para evitar stale closure
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout
+    const script = document.createElement("script")
+    script.src = "https://assets.calendly.com/assets/external/widget.js"
+    script.async = true
 
-    const loadCalendly = () => {
-      // Check if Calendly is already loaded
-      if (window.Calendly) {
-        setIsCalendlyLoaded(true)
-        setIsLoading(false)
-        return
-      }
+    script.onload = () => {
+      setIsLoading(false)
+      isLoadingRef.current = false
+    }
 
-      // Create script element
-      const script = document.createElement("script")
-      script.src = "https://assets.calendly.com/assets/external/widget.js"
-      script.async = true
+    script.onerror = () => {
+      setShowFallback(true)
+      setIsLoading(false)
+      isLoadingRef.current = false
+    }
 
-      script.onload = () => {
-        console.log("Calendly script loaded successfully")
-        setIsCalendlyLoaded(true)
-        setIsLoading(false)
-      }
+    document.head.appendChild(script)
 
-      script.onerror = () => {
-        console.error("Failed to load Calendly script")
+    const timeoutId = setTimeout(() => {
+      if (isLoadingRef.current) {
         setShowFallback(true)
         setIsLoading(false)
       }
-
-      document.head.appendChild(script)
-
-      // Set timeout to show fallback if loading takes too long
-      timeoutId = setTimeout(() => {
-        if (!isCalendlyLoaded) {
-          console.warn("Calendly loading timeout")
-          setShowFallback(true)
-          setIsLoading(false)
-        }
-      }, 8000)
-    }
-
-    loadCalendly()
+    }, 8000)
 
     return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId)
+      clearTimeout(timeoutId)
+      if (document.head.contains(script)) {
+        document.head.removeChild(script)
       }
     }
-  }, [isCalendlyLoaded])
+  }, [])
 
   const handleWhatsAppClick = () => {
     const message = encodeURIComponent("Hola, me gustaría agendar una asesoría fiscal gratuita para crear una LLC.")
@@ -93,13 +71,13 @@ Gracias,`)
   const handleRetry = () => {
     setIsLoading(true)
     setShowFallback(false)
-    setIsCalendlyLoaded(false)
+    isLoadingRef.current = true
     window.location.reload()
   }
 
   return (
     <section id="consulta" className="py-20 gradient-bg relative overflow-hidden">
-      {/* Background decoration */}
+      {/* Backgrounds */}
       <div className="absolute inset-0 bg-black/5"></div>
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
@@ -117,7 +95,8 @@ Gracias,`)
             Una reunión de 30 minutos con un asesor fiscal experto donde verás si la LLC se puede aplicar a tu empresa
             de manera 100% legal
           </p>
-           {/* Calendar Section */}
+
+          {/* Calendly Section */}
           <div className="bg-white rounded-3xl p-2 md:p-4 shadow-2xl border-4 border-white/20 backdrop-blur-sm mb-8">
             <div className="w-full overflow-hidden rounded-2xl">
               {isLoading && !showFallback && (
@@ -130,7 +109,7 @@ Gracias,`)
                 </div>
               )}
 
-              {isCalendlyLoaded && !showFallback && (
+              {!showFallback && (
                 <div
                   className="calendly-inline-widget"
                   data-url="https://calendly.com/d/cncj-m4f-7xt/consulta-fiscal-para-crear-una-llc"

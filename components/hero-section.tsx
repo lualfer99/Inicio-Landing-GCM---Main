@@ -60,7 +60,7 @@ export default function HeroSection() {
           <div className="relative max-w-4xl mx-auto mb-12">
             <div className="aspect-video bg-gray-900 rounded-2xl md:rounded-3xl overflow-hidden relative shadow-2xl border-4 border-white">
               <iframe
-                src="https://dailymotion.com/embed/video/k5UwAMFEaaUzFADifdI?autoplay=0&playsinline=1&ui-highlight&start&endscreen-enable=0&controls=1&mute=0&ui-start-screen-info=1&ui-logo=1"
+                src="https://dailymotion.com/embed/video/k7b6NW7jl2fl5tDiWcK?autoplay=0&playsinline=1&ui-highlight&start&endscreen-enable=0&controls=1&mute=0&ui-start-screen-info=1&ui-logo=1"
                 width="100%"
                 height="100%"
                 frameBorder="0"
