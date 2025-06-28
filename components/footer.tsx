@@ -1,94 +1,146 @@
 import Link from "next/link"
-import { Instagram, Facebook, Youtube } from "lucide-react"
+import Image from "next/image"
+import { Mail, Phone, MapPin, Clock } from "lucide-react"
 
-export default function Footer() {
+export function Footer() {
   return (
-    <footer className="bg-gray-900 text-white py-12">
-      <div className="container mx-auto px-4 lg:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-          {/* Logo and Description */}
-          <div className="lg:col-span-2">
-            <div className="flex items-center mb-4">
-              <img src="/images/logo-white.png" alt="GCMAsesores Logo" className="h-10 w-auto" />
+    <footer className="bg-gray-900 text-white">
+      <div className="container mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {/* Company Info */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Image
+                src="/images/logo-footer-white.png"
+                alt="GCM Asesores"
+                width={40}
+                height={40}
+                className="w-10 h-10"
+              />
+              <span className="text-xl font-bold">GCM Asesores</span>
             </div>
-            <p className="text-gray-400 mb-6 max-w-md">
-              ¡Agenda ya tu asesoría fiscal gratuita y descubre la mejor estructura para tu negocio digital!
+            <p className="text-gray-300 text-sm">
+              Especialistas en asesoría fiscal internacional y constitución de LLCs en Estados Unidos para emprendedores
+              españoles.
             </p>
             <div className="flex space-x-4">
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Instagram className="h-6 w-6" />
-              </Link>
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Facebook className="h-6 w-6" />
-              </Link>
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Youtube className="h-6 w-6" />
-              </Link>
+              <div className="flex items-center space-x-2 text-sm">
+                <Phone className="w-4 h-4 text-blue-400" />
+                <span>+34 123 456 789</span>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 text-sm">
+              <Mail className="w-4 h-4 text-blue-400" />
+              <span>info@gcmasesores.io</span>
             </div>
           </div>
 
-          {/* Legal Links */}
-          <div>
-            <h3 className="font-semibold text-lg mb-4">Legal</h3>
-            <ul className="space-y-2">
+          {/* Services */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Servicios</h3>
+            <ul className="space-y-2 text-sm text-gray-300">
               <li>
-                <Link href="/aviso-legal" className="text-gray-400 hover:text-white transition-colors">
-                  Aviso legal
+                <Link href="/gestoria-para-llcs" className="hover:text-white transition-colors">
+                  Constitución de LLCs
                 </Link>
               </li>
               <li>
-                <Link href="/politica-privacidad" className="text-gray-400 hover:text-white transition-colors">
-                  Política de privacidad
+                <Link href="/#services" className="hover:text-white transition-colors">
+                  Asesoría Fiscal Internacional
                 </Link>
               </li>
               <li>
-                <Link href="/politica-de-cookies" className="text-gray-400 hover:text-white transition-colors">
-                  Política de cookies
+                <Link href="/#services" className="hover:text-white transition-colors">
+                  Optimización Tributaria
                 </Link>
               </li>
               <li>
-                <Link href="/descargo-de-responsabilidad" className="text-gray-400 hover:text-white transition-colors">
-                  Descargo de responsabilidad
+                <Link href="/#services" className="hover:text-white transition-colors">
+                  Compliance y Reporting
+                </Link>
+              </li>
+              <li>
+                <Link href="/#services" className="hover:text-white transition-colors">
+                  Planificación Patrimonial
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* CTA */}
-          <div>
-            <div className="bg-blue-600 p-4 rounded-lg text-center">
-              <p className="text-sm mb-3">
-                ¡Agenda ya tu asesoría fiscal gratuita y descubre la mejor estructura para tu negocio digital!
-              </p>
-              <Link
-                href="#consulta"
-                className="inline-block bg-white text-blue-600 px-6 py-4 rounded-lg font-semibold text-base hover:bg-gray-100 transition-all duration-200 transform hover:scale-105"
-              >
-                ASESORÍA FISCAL GRATUITA
-              </Link>
+          {/* Company */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Empresa</h3>
+            <ul className="space-y-2 text-sm text-gray-300">
+              <li>
+                <Link href="/#about" className="hover:text-white transition-colors">
+                  Sobre Nosotros
+                </Link>
+              </li>
+              <li>
+                <Link href="/#team" className="hover:text-white transition-colors">
+                  Nuestro Equipo
+                </Link>
+              </li>
+              <li>
+                <Link href="/#testimonials" className="hover:text-white transition-colors">
+                  Testimonios
+                </Link>
+              </li>
+              <li>
+                <Link href="/#contact" className="hover:text-white transition-colors">
+                  Contacto
+                </Link>
+              </li>
+              <li>
+                <Link href="/#consultation" className="hover:text-white transition-colors">
+                  Consulta Gratuita
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Contact & Hours */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Contacto</h3>
+            <div className="space-y-3 text-sm text-gray-300">
+              <div className="flex items-start space-x-2">
+                <MapPin className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                <span>
+                  Madrid, España
+                  <br />
+                  Atención online en toda España
+                </span>
+              </div>
+              <div className="flex items-start space-x-2">
+                <Clock className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p>Lunes - Viernes: 9:00 - 18:00</p>
+                  <p>Sábados: 10:00 - 14:00</p>
+                  <p>Domingos: Cerrado</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Disclaimer */}
-        <div className="border-t border-gray-800 pt-8">
-          <div className="text-xs text-gray-500 leading-relaxed mb-4">
-            <strong>Descargo de responsabilidad:</strong> La información proporcionada en GCM es únicamente para fines
-            informativos y no debe interpretarse como consejo o asesoramiento profesional en ninguna de sus formas. No
-            pretende ser ni sustituir el asesoramiento legal, fiscal, financiero o cualquier otro tipo de asesoramiento
-            profesional.
-          </div>
-          <div className="text-xs text-gray-500 leading-relaxed mb-4">
-            Antes de tomar decisiones basadas en el contenido de este sitio, se recomienda encarecidamente consultar con
-            un profesional calificado en el área relevante, como un abogado, contador o asesor financiero. La
-            información en GCM se ofrece con fines educativos y como una guía general basada en nuestro conocimiento y
-            experiencia, pero no constituye asesoramiento profesional específico. Cualquier acción tomada en base a la
-            información de este sitio web es estrictamente bajo su propio riesgo. GCM no asume responsabilidad por
-            decisiones tomadas o acciones realizadas basadas en el contenido de este sitio web.
-          </div>
-          <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-            <p>© {new Date().getFullYear()} GCMAsesores.io. Todos los derechos reservados.</p>
-            <p className="mt-2 md:mt-0">Sitio web con fines informativos únicamente.</p>
+        {/* Bottom Bar */}
+        <div className="border-t border-gray-800 mt-12 pt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            <div className="text-sm text-gray-400">© 2024 GCM Asesores. Todos los derechos reservados.</div>
+            <div className="flex space-x-6 text-sm text-gray-400">
+              <Link href="/politica-privacidad" className="hover:text-white transition-colors">
+                Política de Privacidad
+              </Link>
+              <Link href="/politica-de-cookies" className="hover:text-white transition-colors">
+                Política de Cookies
+              </Link>
+              <Link href="/aviso-legal" className="hover:text-white transition-colors">
+                Aviso Legal
+              </Link>
+              <Link href="/descargo-de-responsabilidad" className="hover:text-white transition-colors">
+                Descargo de Responsabilidad
+              </Link>
+            </div>
           </div>
         </div>
       </div>
