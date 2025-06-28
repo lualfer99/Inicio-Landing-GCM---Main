@@ -46,12 +46,6 @@ export async function initializeStorage(): Promise<{ success: boolean; error?: s
 
 export async function uploadBlogImage(file: File): Promise<{ url: string | null; error: string | null }> {
   try {
-    // Initialize storage first
-    const initResult = await initializeStorage()
-    if (!initResult.success) {
-      return { url: null, error: initResult.error || "Storage initialization failed" }
-    }
-
     const fileExt = file.name.split(".").pop()
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
     const key = `${UPLOAD_PREFIX}/${fileName}`

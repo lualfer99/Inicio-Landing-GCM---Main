@@ -1,9 +1,11 @@
 "use client"
 
-import { useState, type KeyboardEvent } from "react"
+import type React from "react"
+
+import { useState } from "react"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { X } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { X, Plus } from "lucide-react"
 
 interface KeywordsInputProps {
   value: string[]
@@ -14,55 +16,83 @@ interface KeywordsInputProps {
 export function KeywordsInput({ value, onChange, placeholder }: KeywordsInputProps) {
   const [inputValue, setInputValue] = useState("")
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault()
-      addKeyword()
-    } else if (e.key === "Backspace" && inputValue === "" && value.length > 0) {
-      removeKeyword(value.length - 1)
-    }
-  }
-
   const addKeyword = () => {
-    const keyword = inputValue.trim().toLowerCase()
+    const keyword = inputValue.trim()
     if (keyword && !value.includes(keyword)) {
       onChange([...value, keyword])
+      setInputValue("")
     }
-    setInputValue("")
   }
 
   const removeKeyword = (index: number) => {
-    const newKeywords = value.filter((_, i) => i !== index)
-    onChange(newKeywords)
+    onChange(value.filter((_, i) => i !== index))
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      addKeyword()
+    }
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+    if (val.includes(",")) {
+      const keywords = val
+        .split(",")
+        .map((k) => k.trim())
+        .filter((k) => k && !value.includes(k))
+      if (keywords.length > 0) {
+        onChange([...value, ...keywords])
+        setInputValue("")
+      }
+    } else {
+      setInputValue(val)
+    }
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap gap-2 mb-2">
-        {value.map((keyword, index) => (
-          <Badge key={index} variant="secondary" className="flex items-center gap-1">
-            {keyword}
-            <button
-              type="button"
-              onClick={() => removeKeyword(index)}
-              className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </Badge>
-        ))}
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <Input
+          value={inputValue}
+          onChange={handleInputChange}
+          onKeyPress={handleKeyPress}
+          placeholder={placeholder || "Add keyword and press Enter"}
+          className="flex-1"
+        />
+        <Button
+          type="button"
+          onClick={addKeyword}
+          disabled={!inputValue.trim()}
+          size="sm"
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
       </div>
-      <Input
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={addKeyword}
-        placeholder={placeholder || "Add keywords (press Enter or comma to add)"}
-        className="w-full"
-      />
-      <p className="text-xs text-gray-500">
-        Press Enter or comma to add keywords. Use Backspace to remove the last keyword.
-      </p>
+
+      {value.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {value.map((keyword, index) => (
+            <span
+              key={index}
+              className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
+            >
+              {keyword}
+              <button
+                type="button"
+                onClick={() => removeKeyword(index)}
+                className="hover:bg-blue-200 rounded-full p-0.5"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      <p className="text-xs text-gray-500">Separate keywords with commas or press Enter to add</p>
     </div>
   )
 }
