@@ -3,11 +3,16 @@
 import { useEffect, useRef, useState } from "react"
 import { Calendar, Clock, Shield, CheckCircle, MessageCircle, Phone, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { usePathname } from "next/navigation"
 
 export default function ConsultationSection() {
   const [showFallback, setShowFallback] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const isLoadingRef = useRef(true) // 🔁 Referencia para evitar stale closure
+  const pathname = usePathname()
+  const calendlyUrl = pathname.includes("gestoria-para-llcs")
+    ? "https://calendly.com/d/cndt-ytb-8j3/consulta-fiscal-para-optimizar-una-llc"
+    : "https://calendly.com/d/cncj-m4f-7xt/consulta-fiscal-para-crear-una-llc"
 
   useEffect(() => {
     const script = document.createElement("script")
@@ -76,14 +81,14 @@ Gracias,`)
   }
 
   return (
-    <section id="consulta" className="py-20 gradient-bg relative overflow-hidden">
+    <section id="consulta" className="py-10 gradient-bg relative overflow-hidden">
       {/* Backgrounds */}
       <div className="absolute inset-0 bg-black/5"></div>
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
 
       <div className="container mx-auto px-4 lg:px-6 relative">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-full text-sm font-semibold mb-8">
             <Calendar className="w-4 h-4" />
             Agenda tu Consulta
@@ -110,16 +115,17 @@ Gracias,`)
               )}
 
               {!showFallback && (
+              <div className="bg-white rounded-t-2xl max-w-5xl mx-auto">
                 <div
                   className="calendly-inline-widget"
-                  data-url="https://calendly.com/d/cncj-m4f-7xt/consulta-fiscal-para-crear-una-llc"
+                  data-url={calendlyUrl}
                   style={{
                     minWidth: "420px",
-                    height: "800px",
+                    height: "850px",
                     width: "100%",
-                    maxWidth: "100%",
                   }}
                 />
+              </div>
               )}
 
               {showFallback && (
