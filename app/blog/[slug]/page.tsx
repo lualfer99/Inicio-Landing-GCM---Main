@@ -1,5 +1,7 @@
+import { supabase, type Post } from "@/lib/supabase"
+import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import dynamic from "next/dynamic"
+import BlogPostClientPage from "./BlogPostClientPage"
 
 interface BlogPostPageProps {
   params: {
@@ -7,12 +9,7 @@ interface BlogPostPageProps {
   }
 }
 
-const getPost = async (slug: string) => {
-  \
-  const { supabase }
-  from
-  ;("@/lib/supabase")
-
+async function getPost(slug: string): Promise<Post | null> {
   const { data, error } = await supabase
     .from("posts")
     .select(`
@@ -39,36 +36,71 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 
   if (!post) {
     return {
-      title: "Post no encontrado - GCM Asesores",
+      title: "Post not found - GCM Asesores",
     }
   }
 
+  const imageUrl = post.image_urls && post.image_urls.length > 0 ? post.image_urls[0] : undefined
+
   return {
     title: `${post.title} - GCM Asesores Blog`,
-    description: post.description || post.content.substring(0, 160),
-    keywords: post.keywords,
+    description: post.description || `Artículo sobre ${post.title}`,
+    keywords: post.keywords?.join(", "),
     openGraph: {
       title: post.title,
-      description: post.description || post.content.substring(0, 160),
+      description: post.description || `Artículo sobre ${post.title}`,
       type: "article",
-      url: `https://gcmasesores.io/blog/${post.slug}`,
-      images: post.image_urls && post.image_urls.length > 0 ? [post.image_urls[0]] : [],
       publishedTime: post.created_at,
       modifiedTime: post.updated_at,
+      authors: post.blog_users ? [post.blog_users.name] : undefined,
+      images: imageUrl ? [{ url: imageUrl, alt: post.title }] : undefined,
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
-      description: post.description || post.content.substring(0, 160),
-      images: post.image_urls && post.image_urls.length > 0 ? [post.image_urls[0]] : [],
+      description: post.description || `Artículo sobre ${post.title}`,
+      images: imageUrl ? [imageUrl] : undefined,
     },
   }
 }
 
-const BlogPostClientPage = dynamic(() => import("./BlogPostClientPage"), {
-  ssr: false,
-})
+export default async function BlogPostPage({ params }: BlogPostPageProps) {
+  const post = await getPost(params.slug)
 
-export default function BlogPostPage(props: BlogPostPageProps) {
-  return <BlogPostClientPage {...props} />
+  if (!post) {
+    notFound()
+  }
+
+  // JSON-LD structured data
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.description,
+    image: post.image_urls && post.image_urls.length > 0 ? post.image_urls : undefined,
+    datePublished: post.created_at,
+    dateModified: post.updated_at,
+    author: post.blog_users
+      ? {
+          "@type": "Person",
+          name: post.blog_users.name,
+        }
+      : undefined,
+    publisher: {
+      "@type": "Organization",
+      name: "GCM Asesores",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://gcmasesores.io/images/logo.png",
+      },
+    },
+    keywords: post.keywords?.join(", "),
+  }
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <BlogPostClientPage post={post} />
+    </>
+  )
 }

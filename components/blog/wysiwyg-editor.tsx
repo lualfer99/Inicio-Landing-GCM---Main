@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Bold,
@@ -8,18 +8,13 @@ import {
   Underline,
   List,
   ListOrdered,
-  Link2,
+  Link,
   ImageIcon,
+  Quote,
+  Code,
   Heading1,
   Heading2,
   Heading3,
-  Quote,
-  Code,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Undo,
-  Redo,
 } from "lucide-react"
 
 interface WysiwygEditorProps {
@@ -30,100 +25,118 @@ interface WysiwygEditorProps {
 
 export function WysiwygEditor({ value, onChange, placeholder }: WysiwygEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null)
-  const [isActive, setIsActive] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
 
-  const executeCommand = useCallback(
-    (command: string, value?: string) => {
-      document.execCommand(command, false, value)
-      if (editorRef.current) {
-        onChange(editorRef.current.innerHTML)
-      }
-    },
-    [onChange],
-  )
+  useEffect(() => {
+    if (editorRef.current && !isInitialized) {
+      editorRef.current.innerHTML = value
+      setIsInitialized(true)
+    }
+  }, [value, isInitialized])
 
-  const handleInput = useCallback(() => {
+  const handleInput = () => {
     if (editorRef.current) {
       onChange(editorRef.current.innerHTML)
     }
-  }, [onChange])
+  }
 
-  const handleFocus = () => setIsActive(true)
-  const handleBlur = () => setIsActive(false)
+  const execCommand = (command: string, value?: string) => {
+    document.execCommand(command, false, value)
+    editorRef.current?.focus()
+    handleInput()
+  }
+
+  const insertHeading = (level: number) => {
+    execCommand("formatBlock", `h${level}`)
+  }
 
   const insertLink = () => {
     const url = prompt("Enter URL:")
     if (url) {
-      executeCommand("createLink", url)
+      execCommand("createLink", url)
     }
   }
 
   const insertImage = () => {
     const url = prompt("Enter image URL:")
     if (url) {
-      executeCommand("insertImage", url)
+      execCommand("insertImage", url)
     }
   }
-
-  const formatBlock = (tag: string) => {
-    executeCommand("formatBlock", tag)
-  }
-
-  const toolbarButtons = [
-    { icon: Undo, command: "undo", title: "Undo" },
-    { icon: Redo, command: "redo", title: "Redo" },
-    { type: "separator" },
-    { icon: Bold, command: "bold", title: "Bold" },
-    { icon: Italic, command: "italic", title: "Italic" },
-    { icon: Underline, command: "underline", title: "Underline" },
-    { type: "separator" },
-    { icon: Heading1, action: () => formatBlock("h1"), title: "Heading 1" },
-    { icon: Heading2, action: () => formatBlock("h2"), title: "Heading 2" },
-    { icon: Heading3, action: () => formatBlock("h3"), title: "Heading 3" },
-    { type: "separator" },
-    { icon: List, command: "insertUnorderedList", title: "Bullet List" },
-    { icon: ListOrdered, command: "insertOrderedList", title: "Numbered List" },
-    { icon: Quote, action: () => formatBlock("blockquote"), title: "Quote" },
-    { type: "separator" },
-    { icon: AlignLeft, command: "justifyLeft", title: "Align Left" },
-    { icon: AlignCenter, command: "justifyCenter", title: "Align Center" },
-    { icon: AlignRight, command: "justifyRight", title: "Align Right" },
-    { type: "separator" },
-    { icon: Link2, action: insertLink, title: "Insert Link" },
-    { icon: ImageIcon, action: insertImage, title: "Insert Image" },
-    { icon: Code, command: "formatBlock", value: "pre", title: "Code Block" },
-  ]
 
   return (
     <div className="border border-gray-300 rounded-lg overflow-hidden">
       {/* Toolbar */}
       <div className="bg-gray-50 border-b border-gray-300 p-2 flex flex-wrap gap-1">
-        {toolbarButtons.map((button, index) => {
-          if (button.type === "separator") {
-            return <div key={index} className="w-px bg-gray-300 mx-1" />
-          }
+        <Button type="button" variant="ghost" size="sm" onClick={() => insertHeading(1)} className="h-8 px-2">
+          <Heading1 className="h-4 w-4" />
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => insertHeading(2)} className="h-8 px-2">
+          <Heading2 className="h-4 w-4" />
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => insertHeading(3)} className="h-8 px-2">
+          <Heading3 className="h-4 w-4" />
+        </Button>
 
-          const Icon = button.icon!
-          return (
-            <Button
-              key={index}
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                if (button.action) {
-                  button.action()
-                } else if (button.command) {
-                  executeCommand(button.command, button.value)
-                }
-              }}
-              className="h-8 w-8 p-0 hover:bg-gray-200"
-              title={button.title}
-            >
-              <Icon className="h-4 w-4" />
-            </Button>
-          )
-        })}
+        <div className="w-px h-6 bg-gray-300 mx-1" />
+
+        <Button type="button" variant="ghost" size="sm" onClick={() => execCommand("bold")} className="h-8 px-2">
+          <Bold className="h-4 w-4" />
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => execCommand("italic")} className="h-8 px-2">
+          <Italic className="h-4 w-4" />
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => execCommand("underline")} className="h-8 px-2">
+          <Underline className="h-4 w-4" />
+        </Button>
+
+        <div className="w-px h-6 bg-gray-300 mx-1" />
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => execCommand("insertUnorderedList")}
+          className="h-8 px-2"
+        >
+          <List className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => execCommand("insertOrderedList")}
+          className="h-8 px-2"
+        >
+          <ListOrdered className="h-4 w-4" />
+        </Button>
+
+        <div className="w-px h-6 bg-gray-300 mx-1" />
+
+        <Button type="button" variant="ghost" size="sm" onClick={insertLink} className="h-8 px-2">
+          <Link className="h-4 w-4" />
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={insertImage} className="h-8 px-2">
+          <ImageIcon className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => execCommand("formatBlock", "blockquote")}
+          className="h-8 px-2"
+        >
+          <Quote className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => execCommand("formatBlock", "pre")}
+          className="h-8 px-2"
+        >
+          <Code className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Editor */}
@@ -131,25 +144,10 @@ export function WysiwygEditor({ value, onChange, placeholder }: WysiwygEditorPro
         ref={editorRef}
         contentEditable
         onInput={handleInput}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        dangerouslySetInnerHTML={{ __html: value }}
-        className={`min-h-[300px] p-4 prose prose-sm max-w-none focus:outline-none ${
-          isActive ? "ring-2 ring-blue-500 ring-inset" : ""
-        }`}
-        style={{
-          wordBreak: "break-word",
-        }}
+        className="min-h-[300px] p-4 focus:outline-none prose prose-sm max-w-none"
+        style={{ minHeight: "300px" }}
         data-placeholder={placeholder}
       />
-
-      <style jsx>{`
-        [contenteditable]:empty:before {
-          content: attr(data-placeholder);
-          color: #9ca3af;
-          pointer-events: none;
-        }
-      `}</style>
     </div>
   )
 }

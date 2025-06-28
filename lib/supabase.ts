@@ -5,23 +5,14 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-export type BlogUser = {
-  id: string
-  email: string
-  name: string
-  role: "admin" | "editor"
-  created_at: string
-  updated_at: string
-}
-
 export type Post = {
   id: string
   title: string
   slug: string
   description: string | null
   content: string
-  image_urls: string[]
-  keywords: string[]
+  image_urls: string[] | null
+  keywords: string[] | null
   published: boolean
   author_id: string | null
   created_at: string
@@ -33,7 +24,14 @@ export type Post = {
   }
 }
 
-// Utility functions
+export type BlogUser = {
+  id: string
+  email: string
+  name: string
+  role: string
+  created_at: string
+}
+
 export function generateSlug(title: string): string {
   return title
     .toLowerCase()
