@@ -29,6 +29,7 @@ export default function OptimizedHeader() {
     { name: "Gestoría para LLCs", href: "/gestoria-para-llcs" },
     { name: "Sobre nosotros", href: "#proceso" },
     { name: "FAQ", href: "#faq" },
+    { name: "Blog", href: "/blog" },
   ]
 
   const handleNavClick = (href: string) => {
