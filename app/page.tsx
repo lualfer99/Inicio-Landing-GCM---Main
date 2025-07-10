@@ -1,4 +1,3 @@
-// app/page.tsx
 import type { Metadata } from "next"
 import OptimizedHeader from "@/components/optimized-header"
 import HeroSection from "@/components/hero-section"

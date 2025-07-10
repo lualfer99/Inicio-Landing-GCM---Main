@@ -3,17 +3,17 @@
 import type React from "react"
 
 import { Star, ChevronLeft, ChevronRight } from "lucide-react"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 
 export default function TrustpilotTestimonialsSection() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-  const [isDragging, setIsDragging] = useState(false)
-  const [startX, setStartX] = useState(0)
-  const [scrollLeft, setScrollLeft] = useState(0)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const autoSlideRef = useRef<NodeJS.Timeout | null>(null)
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
+
+  // Minimum distance for swipe detection
+  const minSwipeDistance = 50
 
   useEffect(() => {
     const checkMobile = () => {
@@ -119,71 +119,48 @@ export default function TrustpilotTestimonialsSection() {
     },
   ]
 
+  const reviewsPerPage = isMobile ? 1 : 4
+  const maxIndex = Math.max(0, reviews.length - reviewsPerPage)
+
   const nextSlide = () => {
-    const maxIndex = reviews.length - (isMobile ? 1 : 3)
-    setCurrentIndex((prevIndex) => (prevIndex >= maxIndex ? 0 : prevIndex + 1))
+    setCurrentIndex((prevIndex) => Math.min(prevIndex + 1, maxIndex))
   }
 
   const prevSlide = () => {
-    const maxIndex = reviews.length - (isMobile ? 1 : 3)
-    setCurrentIndex((prevIndex) => (prevIndex <= 0 ? maxIndex : prevIndex - 1))
+    setCurrentIndex((prevIndex) => Math.max(prevIndex - 1, 0))
   }
 
-  // Auto-slide functionality (disabled on mobile)
-  useEffect(() => {
-    if (!isMobile && !isDragging) {
-      autoSlideRef.current = setInterval(() => {
-        nextSlide()
-      }, 6000) // Slower auto-slide
+  // Touch handlers for swipe gestures
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > minSwipeDistance
+    const isRightSwipe = distance < -minSwipeDistance
+
+    if (isLeftSwipe && currentIndex < maxIndex) {
+      nextSlide()
     }
-
-    return () => {
-      if (autoSlideRef.current) {
-        clearInterval(autoSlideRef.current)
-      }
+    if (isRightSwipe && currentIndex > 0) {
+      prevSlide()
     }
-  }, [isMobile, isDragging])
-
-  // Touch/Mouse drag handlers
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!containerRef.current) return
-    setIsDragging(true)
-    setStartX(e.pageX - containerRef.current.offsetLeft)
-    setScrollLeft(containerRef.current.scrollLeft)
-  }
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!containerRef.current) return
-    setIsDragging(true)
-    setStartX(e.touches[0].pageX - containerRef.current.offsetLeft)
-    setScrollLeft(containerRef.current.scrollLeft)
-  }
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !containerRef.current) return
-    e.preventDefault()
-    const x = e.pageX - containerRef.current.offsetLeft
-    const walk = (x - startX) * 2
-    containerRef.current.scrollLeft = scrollLeft - walk
-  }
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || !containerRef.current) return
-    const x = e.touches[0].pageX - containerRef.current.offsetLeft
-    const walk = (x - startX) * 2
-    containerRef.current.scrollLeft = scrollLeft - walk
-  }
-
-  const handleDragEnd = () => {
-    setIsDragging(false)
   }
 
   const getVisibleReviews = () => {
-    if (isMobile) {
-      return reviews.slice(currentIndex, currentIndex + 1)
-    }
-    return reviews.slice(currentIndex, currentIndex + 3)
+    return reviews.slice(currentIndex, currentIndex + reviewsPerPage)
   }
+
+  const canGoPrev = currentIndex > 0
+  const canGoNext = currentIndex < maxIndex
 
   return (
     <section id="trustpilot-testimonials" className="py-16 md:py-20 bg-gray-50">
@@ -230,79 +207,76 @@ export default function TrustpilotTestimonialsSection() {
 
         {/* Reviews Container */}
         <div className="relative">
-          {/* Mobile: Swipeable container */}
-          {isMobile ? (
+          <div
+            className="overflow-hidden"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
             <div
-              ref={containerRef}
-              className="overflow-x-auto scrollbar-hide"
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleDragEnd}
-              onMouseLeave={handleDragEnd}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleDragEnd}
-              style={{ cursor: isDragging ? "grabbing" : "grab" }}
+              className={`flex transition-transform duration-500 ease-in-out ${isMobile ? "gap-4" : "gap-6"}`}
+              style={{
+                transform: `translateX(-${currentIndex * (100 / reviewsPerPage)}%)`,
+                width: `${(reviews.length / reviewsPerPage) * 100}%`,
+              }}
             >
-              <div className="flex gap-4 pb-4" style={{ width: `${reviews.length * 100}%` }}>
-                {reviews.map((review, index) => (
-                  <div key={index} className="flex-shrink-0 w-full">
-                    <ReviewCard review={review} />
-                  </div>
-                ))}
-              </div>
+              {reviews.map((review, index) => (
+                <div key={index} className={`flex-shrink-0 ${isMobile ? "w-full" : "w-1/4"}`}>
+                  <ReviewCard review={review} />
+                </div>
+              ))}
             </div>
-          ) : (
-            /* Desktop: Carousel */
-            <div className="overflow-hidden">
-              <div
-                className="flex transition-transform duration-500 ease-in-out gap-6"
-                style={{ transform: `translateX(-${currentIndex * (100 / 3)}%)` }}
-              >
-                {reviews.map((review, index) => (
-                  <div key={index} className="w-1/3 flex-shrink-0">
-                    <ReviewCard review={review} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          </div>
 
-          {/* Navigation buttons (desktop only) */}
-          {!isMobile && (
-            <>
-              <button
-                onClick={prevSlide}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-all duration-200 hover:scale-105 z-10"
-                aria-label="Anterior testimonio"
-              >
-                <ChevronLeft className="w-6 h-6 text-gray-600" />
-              </button>
-              <button
-                onClick={nextSlide}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-all duration-200 hover:scale-105 z-10"
-                aria-label="Siguiente testimonio"
-              >
-                <ChevronRight className="w-6 h-6 text-gray-600" />
-              </button>
-            </>
-          )}
+          {/* Navigation buttons - Always visible on both mobile and desktop */}
+          <button
+            onClick={prevSlide}
+            disabled={!canGoPrev}
+            className={`absolute left-0 top-1/2 -translate-y-1/2 ${
+              isMobile ? "-translate-x-2" : "-translate-x-4"
+            } w-10 h-10 md:w-12 md:h-12 bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-105 z-10 ${
+              canGoPrev ? "hover:bg-gray-50 text-gray-600" : "opacity-50 cursor-not-allowed text-gray-400"
+            }`}
+            aria-label="Anterior testimonio"
+          >
+            <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+          </button>
+          <button
+            onClick={nextSlide}
+            disabled={!canGoNext}
+            className={`absolute right-0 top-1/2 -translate-y-1/2 ${
+              isMobile ? "translate-x-2" : "translate-x-4"
+            } w-10 h-10 md:w-12 md:h-12 bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-105 z-10 ${
+              canGoNext ? "hover:bg-gray-50 text-gray-600" : "opacity-50 cursor-not-allowed text-gray-400"
+            }`}
+            aria-label="Siguiente testimonio"
+          >
+            <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
+          </button>
         </div>
 
-        {/* Dots indicator */}
+        {/* Progress indicator */}
         <div className="flex justify-center mt-8 gap-2">
-          {Array.from({ length: Math.ceil(reviews.length / (isMobile ? 1 : 3)) }).map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index * (isMobile ? 1 : 3))}
-              className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-200 ${
-                Math.floor(currentIndex / (isMobile ? 1 : 3)) === index
-                  ? "bg-[#225DF6] scale-125"
-                  : "bg-gray-300 hover:bg-gray-400"
-              }`}
-              aria-label={`Ir al grupo de testimonios ${index + 1}`}
-            />
-          ))}
+          {Array.from({ length: Math.ceil(reviews.length / reviewsPerPage) }).map((_, index) => {
+            const isActive = Math.floor(currentIndex / reviewsPerPage) === index
+            return (
+              <button
+                key={index}
+                onClick={() => setCurrentIndex(index * reviewsPerPage)}
+                className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-200 ${
+                  isActive ? "bg-[#225DF6] scale-125" : "bg-gray-300 hover:bg-gray-400"
+                }`}
+                aria-label={`Ir al grupo de testimonios ${index + 1}`}
+              />
+            )
+          })}
+        </div>
+
+        {/* Navigation info */}
+        <div className="text-center mt-6">
+          <p className="text-sm text-gray-500">
+            {currentIndex + 1} - {Math.min(currentIndex + reviewsPerPage, reviews.length)} de {reviews.length} reseñas
+          </p>
         </div>
 
         {/* Bottom CTA */}
@@ -356,7 +330,7 @@ function ReviewCard({ review }: { review: any }) {
 
       {/* Review text */}
       <div className="flex-1">
-        <p className="text-gray-700 leading-relaxed text-sm line-clamp-4">{review.text}</p>
+        <p className="text-gray-700 leading-relaxed text-sm">{review.text}</p>
       </div>
 
       {/* Footer */}

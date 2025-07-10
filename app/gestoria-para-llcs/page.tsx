@@ -1,4 +1,3 @@
-// app/gestoria/page.tsx
 import type { Metadata } from "next"
 import GestoriaHeroSection from "@/components/gestoria-hero-section"
 import GestoriaServicesSection from "@/components/gestoria-services-section"
@@ -20,7 +19,6 @@ export const metadata: Metadata = {
   description:
     "Gestoría especializada en LLCs para emprendedores digitales. Nos encargamos de todos los trámites fiscales y administrativos en EE.UU. y España de manera 100% legal.",
   keywords: [
-    // Basadas en investigación SEO exhaustiva
     "gestoría LLC",
     "gestoría fiscal LLC",
     "gestoría online LLC",
@@ -46,8 +44,6 @@ export const metadata: Metadata = {
     "gestión administrativa LLC",
     "administración LLC",
     "servicio contable para LLC",
-
-    // Incluye keywords genéricas de creación y fiscalidad
     "LLC Estados Unidos",
     "crear LLC EEUU",
     "abrir LLC USA",
@@ -63,15 +59,11 @@ export const metadata: Metadata = {
     "tax benefits LLC",
     "planificación fiscal internacional",
     "tratados fiscales EEUU España",
-
-    // Emprendedores y nómadas digitales
     "emprendedores digitales",
     "digital nomad LLC",
     "nomadismo digital fiscal",
     "residencia fiscal digital",
     "vida de nómada digital",
-
-    // Long-tail preguntas frecuentes y geo-modificadores
     "gestoría LLC desde España",
     "gestoría LLC desde Madrid",
     "gestoría LLC Barcelona",
@@ -81,8 +73,6 @@ export const metadata: Metadata = {
     "¿por qué necesitar gestoría LLC?",
     "mejor gestoría LLC 2025",
     "asesoría fiscal digital LLC",
-
-    // Power words y modificadores
     "mejor gestoría LLC",
     "rápida gestoría LLC",
     "económico gestoría LLC",
