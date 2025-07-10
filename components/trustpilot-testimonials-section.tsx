@@ -90,36 +90,9 @@ export default function TrustpilotTestimonialsSection() {
       text: "Me gusta mucho lo atentos y disponibles que están siempre a resolver dudas, además de que están muy bien organizados y su servicio es excelente. Siento que mi LLC está en las mejores manos.",
       verified: true,
     },
-    {
-      name: "Marina Dias",
-      initials: "MD",
-      country: "ES",
-      date: "28 mar 2025",
-      rating: 5,
-      text: "Hace unos 6 meses vi una publicidad en redes sociales, pero no sabía si era una opción para mí. Tenía muchas dudas y miedos. Me llamaron y me lo explicaron todo de una forma muy simple. Todo el equipo es muy profesional y competente.",
-      verified: true,
-    },
-    {
-      name: "Marcel Fernández",
-      initials: "MF",
-      country: "ES",
-      date: "28 mar 2025",
-      rating: 5,
-      text: "Es una empresa excepcional, un personal muy atento y te ayudan y solucionan cualquier cosa que necesites, un soporte y asesoramiento de 10, siempre estan alli cuando los necesitas.",
-      verified: true,
-    },
-    {
-      name: "Jordi Ramos",
-      initials: "JR",
-      country: "ES",
-      date: "9 abr 2025",
-      rating: 5,
-      text: "Servicio y atención al cliente de 10, muy buen equipo",
-      verified: true,
-    },
   ]
 
-  const reviewsPerPage = isMobile ? 1 : 4
+  const reviewsPerPage = isMobile ? 1 : Math.min(4, reviews.length)
   const maxIndex = Math.max(0, reviews.length - reviewsPerPage)
 
   const nextSlide = () => {
@@ -153,10 +126,6 @@ export default function TrustpilotTestimonialsSection() {
     if (isRightSwipe && currentIndex > 0) {
       prevSlide()
     }
-  }
-
-  const getVisibleReviews = () => {
-    return reviews.slice(currentIndex, currentIndex + reviewsPerPage)
   }
 
   const canGoPrev = currentIndex > 0
@@ -222,7 +191,7 @@ export default function TrustpilotTestimonialsSection() {
             >
               {reviews.map((review, index) => (
                 <div key={index} className={`flex-shrink-0 ${isMobile ? "w-full" : "w-1/4"}`}>
-                  <ReviewCard review={review} />
+                  <ReviewCard review={review} isMobile={isMobile} />
                 </div>
               ))}
             </div>
@@ -298,12 +267,16 @@ export default function TrustpilotTestimonialsSection() {
   )
 }
 
-// Review Card Component
-function ReviewCard({ review }: { review: any }) {
+// Review Card Component with consistent height and full text visibility
+function ReviewCard({ review, isMobile }: { review: any; isMobile: boolean }) {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 h-full flex flex-col hover:shadow-md transition-shadow duration-200">
+    <div
+      className={`bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex flex-col hover:shadow-md transition-shadow duration-200 ${
+        isMobile ? "min-h-[320px]" : "min-h-[380px]"
+      }`}
+    >
       {/* Header */}
-      <div className="flex items-start gap-4 mb-4">
+      <div className="flex items-start gap-4 mb-4 flex-shrink-0">
         <div className="relative">
           <div className="w-12 h-12 bg-gradient-to-br from-[#225DF6] to-[#1e4fd6] rounded-full flex items-center justify-center text-white font-semibold text-sm">
             {review.initials}
@@ -328,18 +301,20 @@ function ReviewCard({ review }: { review: any }) {
         </div>
       </div>
 
-      {/* Review text */}
-      <div className="flex-1">
-        <p className="text-gray-700 leading-relaxed text-sm">{review.text}</p>
-      </div>
+      {/* Review text - Full visibility with proper spacing */}
+      <div className="flex-1 flex flex-col justify-between">
+        <div className="mb-4">
+          <p className={`text-gray-700 leading-relaxed ${isMobile ? "text-sm" : "text-sm"}`}>{review.text}</p>
+        </div>
 
-      {/* Footer */}
-      <div className="mt-4 pt-4 border-t border-gray-100">
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <span>Verificado por Trustpilot</span>
-          <div className="flex items-center gap-1">
-            <Star className="w-3 h-3 text-[#00B67A] fill-current" />
-            <span className="text-[#00B67A] font-medium">Trustpilot</span>
+        {/* Footer - Always at bottom */}
+        <div className="pt-4 border-t border-gray-100 flex-shrink-0">
+          <div className="flex items-center justify-between text-xs text-gray-500">
+            <span>Verificado por Trustpilot</span>
+            <div className="flex items-center gap-1">
+              <Star className="w-3 h-3 text-[#00B67A] fill-current" />
+              <span className="text-[#00B67A] font-medium">Trustpilot</span>
+            </div>
           </div>
         </div>
       </div>
