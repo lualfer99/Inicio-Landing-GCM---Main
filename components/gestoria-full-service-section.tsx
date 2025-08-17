@@ -38,7 +38,7 @@ export default function GestoriaFullServiceSection() {
             </div>
 
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              Creamos y gestionamos tu LLC <span className="text-blue-600">360°</span>
+              Asesoramos y gestionamos tu LLC <span className="text-blue-600">360°</span>
             </h2>
 
             <p className="text-lg text-gray-600 mb-8">

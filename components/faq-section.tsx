@@ -6,60 +6,26 @@ import { HelpCircle, Plus } from "lucide-react"
 export default function FAQSection() {
   const faqs = [
     {
-      question: "¿Qué es una LLC?",
-      answer: (
-        <>
-          Una <strong>LLC</strong> (Limited Liability Company) es un tipo de <strong>sociedad</strong> en los{" "}
-          <strong>Estados Unidos</strong> que puede ser creada de forma totalmente <strong>online</strong> desde
-          cualquier parte del mundo, incluyendo <strong>España</strong>. Las LLCs son consideradas{" "}
-          <strong>«pass-through entities»</strong>, lo que significa que los beneficios o pérdidas deben de pasarse a
-          los propietarios a <strong>final</strong> del año a través de la <strong>empresa</strong>. Son estructuras
-          fiscales ideales para la creación de <strong>negocios online</strong> u <strong>optimización</strong> fiscal
-          si ya tienes una <strong>empresa</strong>.
-        </>
-      ),
-    },
-    {
-      question: "¿Es legal tener una LLC en EEUU si vivo en España o Latinoamérica?",
-      answer: (
-        <>
-          <strong>SÍ</strong>, es <strong>legal</strong> tener una <strong>LLC</strong> en EEUU si vives en{" "}
-          <strong>España o Latinoamérica</strong>. La fórmula de las LLC en USA para extranjeros está específicamente
-          diseñada para atraer actividades económicas de <strong>no residentes</strong> a Estados Unidos, que es donde
-          se <strong>declaran</strong> los ingresos. Pero no donde se <strong>pagan</strong> los{" "}
-          <strong>impuestos</strong>. Los beneficios o pérdidas de las LLC son «pass through entity». Es decir, que
-          pasan al propietario final a través de la empresa. Además es obligatorio al final de cada año, traspasar los
-          beneficios a los <strong>propietarios</strong>. Y los impuestos de esos beneficios, se pagan en el{" "}
-          <strong>país</strong> en el que <strong>resida</strong> el <strong>propietario</strong>. Si resides en{" "}
-          <strong>España</strong>, tendrás que declarar esos beneficios a la <strong>Hacienda</strong> española en el{" "}
-          <strong>IRPF</strong> como beneficios por sociedades transparentes.
-        </>
-      ),
-    },
-    {
       question: "¿Cómo se crea una LLC en los Estados Unidos desde España?",
       answer: (
         <>
-          La creación de una LLC en los Estados Unidos puede realizarse de forma <strong>online</strong>. El proceso
-          incluye la obtención de una <strong>dirección</strong> en los Estados Unidos para la <strong>empresa</strong>{" "}
-          (A través de cualquier mail box), <strong>constitución</strong> de la sociedad, obtención del{" "}
-          <strong>EIN</strong>, hacer un acuerdo operativo, creación de una <strong>cuenta</strong> en un{" "}
-          <strong>banco</strong> extranjero para asociarla a la LLC…, la creación de la LLC suele oscilar entre{" "}
-          <strong>15 días y 2 meses</strong> para tenerla operativa y con todos los papeles, pero en GCM, gestionamos
-          todo el proceso en menos de <strong>5 días</strong> listo para <strong>facturar</strong> a{" "}
-          <strong>tus clientes</strong>, gracias a nuestra red de <strong>colaboradores</strong> en EEUU.
+          <p className="text-gray-700 leading-relaxed">Nosotros nos encargamos de todo, sin que tengas que viajar a EE.UU. y sin complicaciones.</p><p className="text-gray-700 mb-2 leading-relaxed">Otros tardan de 2 a 6 meses, pero con nosotros tendrás tu LLC lista en solo <span className="font-semibold">7-10 días</span>.</p><ol className="list-decimal list-inside space-y-2 text-gray-700"><li>Registramos tu LLC en el estado más conveniente.</li><li>Obtenemos tu EIN para que puedas operar legalmente.</li><li>Abrimos tu cuenta bancaria en EE.UU.</li><li>Te guiamos en todo el proceso para que empieces a facturar cuanto antes.</li></ol><p className="text-gray-700 mt-2 leading-relaxed font-medium">Tú solo te enfocas en tu negocio, nosotros hacemos el resto.</p>
         </>
       ),
     },
     {
-      question: "¿Por qué no pago impuestos en EEUU?",
+      question: "¿Porqué no puedo utilizar la tarjeta de Mercury en España?",
       answer: (
         <>
-          <strong>No pagas impuestos</strong> en EEUU porque los beneficios o pérdidas de las LLC son pass through
-          entity. Es decir, que pasan al propietario final a través de la empresa. Los impuestos de esos beneficios, se{" "}
-          <strong>pagan</strong> en el <strong>país</strong> en el que resida el <strong>propietario</strong>. Si
-          resides en <strong>España</strong>, tendrás que declarar esos beneficios a la Hacienda española en el{" "}
-          <strong>IRPF</strong> como imputación de rentas en régimen de imputación fiscal internacional.
+          <p className="text-gray-700 leading-relaxed">Mercury es un banco digital estadounidense que no opera en España debido a regulaciones bancarias internacionales.</p>
+        </>
+      ),
+    },
+    {
+      question: "¿Porqué no pago impuestos en EEUU?",
+      answer: (
+        <>
+          <p className="text-gray-700 leading-relaxed">Como no residente de EEUU, no estás sujeto a impuestos federales estadounidenses en ciertos tipos de ingresos.</p>
         </>
       ),
     },
@@ -67,46 +33,26 @@ export default function FAQSection() {
       question: "¿Cómo recibo los pagos de mis clientes?",
       answer: (
         <>
-          Con tu <strong>LLC</strong>, <strong>tendrás</strong> una cuenta <strong>multidivisa</strong> en un{" "}
-          <strong>neobanco</strong> como Wise, ya que es el que más ventajas, <strong>facilidad</strong> y rapidez tiene
-          para crear una cuenta bancaria a nombre de tu empresa, pudiendo <strong>recibir pagos</strong> en{" "}
-          <strong>USD</strong>, <strong>EUR</strong>, y más de <strong>50 divisas</strong>, <strong>y sin</strong>{" "}
-          ningún tipo de <strong>coste</strong> de conversión, <strong>ni comisiones</strong> por transferencias{" "}
-          <strong>ni gastos</strong> de mantenimiento mensual.
+          <p className="text-gray-700 leading-relaxed">Puedes recibir pagos a través de diversos métodos como transferencias bancarias, procesadores de pago internacionales, etc.</p>
         </>
       ),
     },
     {
-      question: "¿Cuáles son las obligaciones fiscales de una LLC en los Estados Unidos y en España?",
+      question: "¿Qué es el CRS?",
       answer: (
         <>
-          En los Estados Unidos, una empresa estadounidense con propietarios extranjeros debe presentar el{" "}
-          <strong>Formulario 5472</strong> y <strong>1120</strong> <strong>cada año</strong> el 15 de abril en la
-          mayoría de los casos. Estos formularios son <strong>INFORMATIVOS</strong> y <strong>NO</strong> una{" "}
-          <strong>declaración</strong> de <strong>impuestos</strong> y se envían vía fax. En España, las obligaciones
-          fiscales se reducen a pagar el <strong>IRPF</strong> de los <strong>beneficios</strong> que haya tenido la
-          LLC.
-        </>
-      ),
-    },
-    {
-      question: "¿Cuáles son las ventajas de una LLC en comparación con una SL española?",
-      answer: (
-        <>
-          Las <strong>LLCs</strong> en los Estados Unidos tienen varias <strong>ventajas</strong> en comparación con las
-          Sociedades <strong>Limitadas españolas o Latinoamericanas</strong>. Estas incluyen la liberación de la carga{" "}
-          <strong>burocrática</strong>, la posibilidad de abrir <strong>cuentas</strong> en el{" "}
-          <strong>extranjero</strong> a nombre de la <strong>empresa</strong>, la capacidad de aplicar estrategias de
-          optimización fiscal y la presentación de impuestos limitada a <strong>dos formularios</strong> informativos
-          muy <strong>sencillos</strong> al <strong>final</strong> del año.
-        </>
-      ),
-    },
-    {
-      question: "¿Cuánto cuesta mantener una LLC?",
-      answer: (
-        <>
-          Una LLC puede llegar a ser muy <strong>barata</strong> de <strong>mantener</strong>, tan solo tendrás que pagar el <strong>mail</strong> box con la <strong>dirección</strong> de tu empresa y el nº de teléfono americáno, pudiendo hacerlo por entre 10 y 20 euros mensuales, aunque depende del tipo de empresa y del volumen de ventas de tu negocio.
+          <p className="text-gray-700 leading-relaxed">
+          El <strong>Tratado estándar internacional (CRS)</strong> es utilizado para el 
+          <strong> intercambio automático de información fiscal entre países</strong>, diseñado para combatir la evasión fiscal. 
+          Aunque la cuenta bancaria esté a nombre de una empresa, siempre se utiliza o administra desde tu cuenta; 
+          en este caso, <strong>el CRS aplica igual para no residentes de EEUU</strong>.  
+          En <strong>EEUU no existe CRS</strong>, pero se aplica a nivel internacional en multitud de países.  
+          Si tienes una <strong>cuenta de empresa en Wise</strong>, la cuenta de <strong>Euro se ubica en Bélgica 
+          (Bélgica tiene CRS)</strong>, y tu cuenta de <strong>USD se ubica en EEUU</strong>.  
+          El <strong>CRS aplica solo para la cuenta de Euro</strong> y <strong>no es riesgoso para los clientes de EEUU</strong>.  
+          En EEUU hay un sistema similar llamado <strong>FACTA</strong>, pero <strong>eso solo aplica dentro de EEUU 
+          y no es riesgoso para los clientes</strong>.
+          </p>
         </>
       ),
     },

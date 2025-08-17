@@ -108,7 +108,7 @@ export const metadata: Metadata = {
       alt: "GCMAsesores.io",
     }]
   },
-    generator: 'v0.dev'
+    generator: 'v0.app'
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

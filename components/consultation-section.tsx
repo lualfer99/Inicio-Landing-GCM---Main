@@ -98,7 +98,7 @@ Gracias,`)
 
           <p className="text-lg md:text-xl text-white/90 mb-12 max-w-3xl mx-auto leading-relaxed">
             Una reunión de 30 minutos con un asesor fiscal experto donde verás si la LLC se puede aplicar a tu empresa
-            de manera 100% legal
+            de manera segura
           </p>
 
           {/* Calendly Section */}

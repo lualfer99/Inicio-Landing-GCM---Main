@@ -45,7 +45,7 @@ export default function ServicesSection() {
       bgColor: "bg-green-50",
     },
     {
-      text: "Apertura de cuenta bancaria empresarial en neobanco (Wise, Mercury, etc.).",
+      text: "Apertura de cuenta bancaria empresarial en neobanco (Relay, Mercury, etc.).",
       icon: Check,
       iconColor: "text-green-600",
       bgColor: "bg-green-50",
@@ -94,12 +94,6 @@ export default function ServicesSection() {
     },
     {
       text: "Bonus: Generación de sentido económico para la empresa.",
-      icon: Gift,
-      iconColor: "text-green-600",
-      bgColor: "bg-green-50",
-    },
-    {
-      text: "Bonus: Te damos de baja como autónomo.",
       icon: Gift,
       iconColor: "text-green-600",
       bgColor: "bg-green-50",

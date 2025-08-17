@@ -4,10 +4,10 @@ export default function BenefitsSection() {
   const benefits = [
     {
       icon: DollarSign,
-      title: "Mantenimiento Económico",
+      title: "Secreto Bancario",
       description:
-        "Puedes mantener una LLC por menos de 10/15 euros al mes. Por lo que podrás centrarte en escalar tu negocio, además de recibir pagos en multitud de divisas sin ningún tipo de comisiones o costes.",
-      highlight: "10/15€/mes",
+        "Aperturamos cuentas bancarias sin CRS (Common Reporting Standard), para maximizar la seguridad y privacidad bancaria en tu operativa.",
+      highlight: "sin CRS",
     },
     {
       icon: Globe,

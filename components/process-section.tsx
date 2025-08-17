@@ -23,7 +23,7 @@ export default function ProcessSection() {
     {
       number: "3",
       title: "OPTIMIZACIÓN",
-      subtitle: "¡A volar!",
+      subtitle: "Perfecciona tu estrategia",
       description:
         "Nos encargaremos de la gestión integral de tu LLC. Ahora que ya tienes optimizado tu negocio, es hora de dar un paso más avanzado, escalar una empresa no es algo sencillo si no tienes experiencia. Te ayudaremos a identificar tus errores y a optimizar tus estrategias fiscales para poder seguir creciendo y asegurar el éxito de tu empresa en el largo plazo.",
       icon: TrendingUp,
