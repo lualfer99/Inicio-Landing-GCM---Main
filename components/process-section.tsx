@@ -98,8 +98,8 @@ export default function ProcessSection() {
         {/* Bottom stats */}
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="text-center">
-            <div className="text-4xl font-bold text-[#225DF6] mb-2">7 días</div>
-            <div className="text-gray-600">Tiempo promedio</div>
+            <div className="text-4xl font-bold text-[#225DF6] mb-2">10 días</div>
+            <div className="text-gray-600">Tiempo de entrega</div>
           </div>
           <div className="text-center">
             <div className="text-4xl font-bold text-[#225DF6] mb-2">100%</div>
