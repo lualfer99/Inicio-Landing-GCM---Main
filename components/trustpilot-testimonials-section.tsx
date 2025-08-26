@@ -218,6 +218,90 @@ const reviews: Review[] = [
   },
 ]
 
+// Function to convert date format for structured data
+const formatDateForStructuredData = (dateStr: string): string => {
+  const months: { [key: string]: string } = {
+    ene: "01",
+    feb: "02",
+    mar: "03",
+    abr: "04",
+    may: "05",
+    jun: "06",
+    jul: "07",
+    ago: "08",
+    sep: "09",
+    oct: "10",
+    nov: "11",
+    dic: "12",
+  }
+
+  const parts = dateStr.split(" ")
+  if (parts.length === 3) {
+    const day = parts[0].padStart(2, "0")
+    const month = months[parts[1]] || "01"
+    const year = parts[2]
+    return `${year}-${month}-${day}`
+  }
+  return "2025-01-01" // fallback date
+}
+
+// Generate structured data for reviews
+const generateStructuredData = () => {
+  const aggregateRating = {
+    "@type": "AggregateRating",
+    ratingValue: "4.8",
+    reviewCount: reviews.length.toString(),
+    bestRating: "5",
+    worstRating: "1",
+  }
+
+  const reviewsStructuredData = reviews.map((review, index) => ({
+    "@type": "Review",
+    "@id": `https://gcmasesores.io/#review-${review.id}`,
+    author: {
+      "@type": "Person",
+      name: review.name,
+    },
+    reviewRating: {
+      "@type": "Rating",
+      ratingValue: review.rating.toString(),
+      bestRating: "5",
+      worstRating: "1",
+    },
+    reviewBody: review.text,
+    datePublished: formatDateForStructuredData(review.date),
+    publisher: {
+      "@type": "Organization",
+      name: "Trustpilot",
+    },
+    url: review.reviewUrl,
+  }))
+
+  const organizationStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "GCM Asesores",
+    url: "https://gcmasesores.io",
+    logo: "https://gcmasesores.io/images/logo.png",
+    description:
+      "Especialistas en creación de LLC en Estados Unidos y optimización fiscal para emprendedores digitales",
+    aggregateRating: aggregateRating,
+    review: reviewsStructuredData,
+    address: {
+      "@type": "PostalAddress",
+      addressCountry: "ES",
+    },
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer service",
+      availableLanguage: ["Spanish", "English"],
+    },
+    sameAs: ["https://es.trustpilot.com/review/gcmasesores.io"],
+  }
+
+  return organizationStructuredData
+}
+
 export default function TrustpilotTestimonialsSection() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
@@ -251,148 +335,207 @@ export default function TrustpilotTestimonialsSection() {
     ))
   }
 
+  const structuredData = generateStructuredData()
+
   return (
-    <section className="py-20 bg-gray-50 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-20 right-10 w-96 h-96 bg-[#00B67A]/5 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-20 left-10 w-96 h-96 bg-[#225DF6]/5 rounded-full blur-3xl"></div>
+    <>
+      {/* Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData),
+        }}
+      />
 
-      <div className="container mx-auto px-4 lg:px-6 relative">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 bg-[#00B67A]/10 text-[#00B67A] px-6 py-3 rounded-full text-sm font-semibold mb-6">
-            <Star className="w-4 h-4 fill-current" />
-            Trustpilot Reviews
+      <section className="py-20 bg-gray-50 relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute top-20 right-10 w-96 h-96 bg-[#00B67A]/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 left-10 w-96 h-96 bg-[#225DF6]/5 rounded-full blur-3xl"></div>
+
+        <div className="container mx-auto px-4 lg:px-6 relative">
+          {/* Header */}
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 bg-[#00B67A]/10 text-[#00B67A] px-6 py-3 rounded-full text-sm font-semibold mb-6">
+              <Star className="w-4 h-4 fill-current" />
+              Trustpilot Reviews
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+              Lo que dicen nuestros <span className="text-[#225DF6]">clientes</span>
+            </h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-[#00B67A] to-[#225DF6] mx-auto mb-8 rounded-full"></div>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Más de 500 emprendedores ya han optimizado su fiscalidad con nosotros
+            </p>
+
+            {/* Aggregate Rating Display */}
+            <div className="mt-8 inline-flex items-center gap-4 bg-white rounded-2xl px-8 py-4 shadow-lg">
+              <div className="flex items-center gap-1">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <Star key={i} className="w-6 h-6 fill-yellow-400 text-yellow-400" />
+                ))}
+              </div>
+              <div className="text-2xl font-bold text-gray-900">4.8</div>
+              <div className="text-gray-600">
+                <span className="font-semibold">Excelente</span> • {reviews.length} reseñas
+              </div>
+            </div>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Lo que dicen nuestros <span className="text-[#225DF6]">clientes</span>
-          </h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-[#00B67A] to-[#225DF6] mx-auto mb-8 rounded-full"></div>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Más de 500 emprendedores ya han optimizado su fiscalidad con nosotros
-          </p>
-        </div>
 
-        {/* Reviews Grid */}
-        <div className="relative">
-          <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-3"} gap-6 mb-8`}>
-            {currentReviews.map((review) => (
-              <div
-                key={review.id}
-                className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden min-h-[420px] flex flex-col"
-              >
-                {/* Hover overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#00B67A]/5 to-[#225DF6]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          {/* Reviews Grid */}
+          <div className="relative">
+            <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-3"} gap-6 mb-8`}>
+              {currentReviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden min-h-[420px] flex flex-col"
+                  itemScope
+                  itemType="https://schema.org/Review"
+                >
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#00B67A]/5 to-[#225DF6]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                <div className="relative z-10 flex flex-col h-full">
-                  {/* Header */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-[#225DF6] to-[#1e52d9] rounded-full flex items-center justify-center text-white font-bold text-sm">
-                      {review.initials}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-gray-900">{review.name}</h3>
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{review.country}</span>
+                  <div className="relative z-10 flex flex-col h-full">
+                    {/* Header */}
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-[#225DF6] to-[#1e52d9] rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        {review.initials}
                       </div>
-                      <div className="text-sm text-gray-500">{review.date}</div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3
+                            className="font-semibold text-gray-900"
+                            itemProp="author"
+                            itemScope
+                            itemType="https://schema.org/Person"
+                          >
+                            <span itemProp="name">{review.name}</span>
+                          </h3>
+                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{review.country}</span>
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          <time itemProp="datePublished" dateTime={formatDateForStructuredData(review.date)}>
+                            {review.date}
+                          </time>
+                        </div>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Rating */}
-                  <div className="flex items-center gap-1 mb-4">{renderStars(review.rating)}</div>
-
-                  {/* Review text */}
-                  <div className="flex-1 mb-6">
-                    <p className="text-gray-700 leading-relaxed line-clamp-6">{review.text}</p>
-                  </div>
-
-                  {/* Link to review */}
-                  <div className="mt-auto">
-                    <a
-                      href={review.reviewUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-[#00B67A] hover:text-[#00B67A]/80 font-medium text-sm transition-colors duration-200"
+                    {/* Rating */}
+                    <div
+                      className="flex items-center gap-1 mb-4"
+                      itemProp="reviewRating"
+                      itemScope
+                      itemType="https://schema.org/Rating"
                     >
-                      Ver reseña completa
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  </div>
+                      <meta itemProp="ratingValue" content={review.rating.toString()} />
+                      <meta itemProp="bestRating" content="5" />
+                      <meta itemProp="worstRating" content="1" />
+                      {renderStars(review.rating)}
+                    </div>
 
-                  {/* Trustpilot verification */}
-                  <div className="mt-4 pt-4 border-t border-gray-100">
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>Verificado por Trustpilot</span>
-                      <div className="flex items-center gap-1">
-                        <Star className="w-3 h-3 fill-[#00B67A] text-[#00B67A]" />
-                        <span className="text-[#00B67A] font-medium">Trustpilot</span>
+                    {/* Review text */}
+                    <div className="flex-1 mb-6">
+                      <p className="text-gray-700 leading-relaxed line-clamp-6" itemProp="reviewBody">
+                        {review.text}
+                      </p>
+                    </div>
+
+                    {/* Link to review */}
+                    <div className="mt-auto">
+                      <a
+                        href={review.reviewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-[#00B67A] hover:text-[#00B67A]/80 font-medium text-sm transition-colors duration-200"
+                        itemProp="url"
+                      >
+                        Ver reseña completa
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    </div>
+
+                    {/* Trustpilot verification */}
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>
+                          Verificado por{" "}
+                          <span itemProp="publisher" itemScope itemType="https://schema.org/Organization">
+                            <span itemProp="name">Trustpilot</span>
+                          </span>
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <Star className="w-3 h-3 fill-[#00B67A] text-[#00B67A]" />
+                          <span className="text-[#00B67A] font-medium">Trustpilot</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Navigation */}
-          <div className="flex items-center justify-center gap-4">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={prevReviews}
-              disabled={currentIndex === 0}
-              className="rounded-full border-2 hover:bg-[#225DF6] hover:text-white hover:border-[#225DF6] transition-all duration-200 bg-transparent"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-
-            {/* Dots indicator */}
-            <div className="flex items-center gap-2">
-              {Array.from({ length: totalPages }, (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentIndex(i)}
-                  className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                    i === currentIndex ? "bg-[#225DF6] w-8" : "bg-gray-300"
-                  }`}
-                />
               ))}
             </div>
 
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={nextReviews}
-              disabled={currentIndex === totalPages - 1}
-              className="rounded-full border-2 hover:bg-[#225DF6] hover:text-white hover:border-[#225DF6] transition-all duration-200 bg-transparent"
+            {/* Navigation */}
+            <div className="flex items-center justify-center gap-4">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={prevReviews}
+                disabled={currentIndex === 0}
+                className="rounded-full border-2 hover:bg-[#225DF6] hover:text-white hover:border-[#225DF6] transition-all duration-200 bg-transparent"
+                aria-label="Ver reseñas anteriores"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+
+              {/* Dots indicator */}
+              <div className="flex items-center gap-2">
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentIndex(i)}
+                    className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                      i === currentIndex ? "bg-[#225DF6] w-8" : "bg-gray-300"
+                    }`}
+                    aria-label={`Ir a la página ${i + 1} de reseñas`}
+                  />
+                ))}
+              </div>
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={nextReviews}
+                disabled={currentIndex === totalPages - 1}
+                className="rounded-full border-2 hover:bg-[#225DF6] hover:text-white hover:border-[#225DF6] transition-all duration-200 bg-transparent"
+                aria-label="Ver siguientes reseñas"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Review counter */}
+            <div className="text-center mt-6">
+              <p className="text-sm text-gray-500">
+                {currentIndex * reviewsPerPage + 1} - {Math.min((currentIndex + 1) * reviewsPerPage, reviews.length)} de{" "}
+                {reviews.length} reseñas
+              </p>
+            </div>
+          </div>
+
+          {/* CTA to Trustpilot */}
+          <div className="text-center mt-12">
+            <a
+              href="https://es.trustpilot.com/review/gcmasesores.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-[#00B67A] text-white px-8 py-4 rounded-full font-semibold hover:bg-[#00B67A]/90 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-
-          {/* Review counter */}
-          <div className="text-center mt-6">
-            <p className="text-sm text-gray-500">
-              {currentIndex * reviewsPerPage + 1} - {Math.min((currentIndex + 1) * reviewsPerPage, reviews.length)} de{" "}
-              {reviews.length} reseñas
-            </p>
+              Ver todas las reseñas en Trustpilot
+              <ExternalLink className="w-5 h-5" />
+            </a>
           </div>
         </div>
-
-        {/* CTA to Trustpilot */}
-        <div className="text-center mt-12">
-          <a
-            href="https://es.trustpilot.com/review/gcmasesores.io"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-[#00B67A] text-white px-8 py-4 rounded-full font-semibold hover:bg-[#00B67A]/90 transition-all duration-200 shadow-lg hover:shadow-xl"
-          >
-            Ver todas las reseñas en Trustpilot
-            <ExternalLink className="w-5 h-5" />
-          </a>
-        </div>
-      </div>
-    </section>
+      </section>
+    </>
   )
 }
