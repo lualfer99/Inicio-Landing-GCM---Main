@@ -117,7 +117,7 @@ export default function SobreNosotrosPage() {
             <Button
               size="lg"
               className="btn-primary text-lg md:text-xl px-8 md:px-12 py-4 md:py-6 text-white font-bold rounded-2xl mb-6 flex items-center"
-              onClick={handleConsultationClick}
+              onClick={() => handleConsultationClick()}
             >
               <Calendar className="w-5 md:w-6 h-5 md:h-6 mr-2" />
               ASESORÍA FISCAL GRATUITA
