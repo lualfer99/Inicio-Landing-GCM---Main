@@ -24,10 +24,10 @@ export default function OptimizedHeader() {
   }, [])
 
   const navItems = [
-    { name: "Inicio", href: "#inicio" },
+    { name: "Inicio", href: "/" },
     { name: "Crear LLC", href: "#creacion-llc" },
     { name: "Gestoría para LLCs", href: "/gestoria-para-llcs" },
-    { name: "Sobre nosotros", href: "#proceso" },
+    { name: "Sobre nosotros", href: "/sobre-nosotros" },
     { name: "FAQ", href: "#faq" },
     { name: "Blog", href: "/blog" },
   ]
