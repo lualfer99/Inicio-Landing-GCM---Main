@@ -23,13 +23,6 @@ export const metadata: Metadata = {
 }
 
 export default function SobreNosotrosPage() {
-  const handleConsultationClick = () => {
-    const element = document.querySelector("#consulta")
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" })
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30">
       <OptimizedHeader />
@@ -114,15 +107,18 @@ export default function SobreNosotrosPage() {
 
           {/* CTA Button */}
           <div className="flex justify-center mb-4">
-            <Button
-              size="lg"
-              className="btn-primary text-lg md:text-xl px-8 md:px-12 py-4 md:py-6 text-white font-bold rounded-2xl mb-6 flex items-center"
-              onClick={() => handleConsultationClick()}
-            >
-              <Calendar className="w-5 md:w-6 h-5 md:h-6 mr-2" />
-              ASESORÍA FISCAL GRATUITA
-            </Button>
+              <Button
+                size="lg"
+                className="btn-primary text-lg md:text-xl px-8 md:px-12 py-4 md:py-6 text-white font-bold rounded-2xl mb-6 flex items-center"
+                asChild
+              >
+                <a href="#consulta">
+                  <Calendar className="w-5 md:w-6 h-5 md:h-6 mr-2" />
+                  ASESORÍA FISCAL GRATUITA
+                </a>
+              </Button>
           </div>
+
 
 
           <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-12 shadow-xl border border-gray-100">
