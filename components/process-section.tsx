@@ -7,7 +7,7 @@ export default function ProcessSection() {
       title: "CREACIÓN DE L.L.C",
       subtitle: "¡Enhorabuena!",
       description:
-        "Creamos tu empresa (LLC) en EE.UU en el estado que elijas, solicitamos tu EIN (Número de identificación del empleador estadounidense) necesario para recibir pagos legalmente, te entregamos todos tus papeles en 10 días laborables, de manera totalmente online y segura.",
+        "Creamos tu empresa (LLC) en EE.UU en el estado que elijas, solicitamos tu EIN (Número de identificación del empleador estadounidense) necesario para recibir pagos legalmente, te entregamos todos tus papeles en menos de 10 días laborables, de manera totalmente online y segura.",
       icon: CheckCircle,
       color: "from-green-400 to-green-500",
     },
@@ -16,7 +16,7 @@ export default function ProcessSection() {
       title: "ACCIÓN",
       subtitle: "Es tu momento...",
       description:
-        "Tendrás tu empresa lista para facturar y acceso a la zona de emprendimiento, te ayudaremos con todos los cambios necesarios a aplicar en tu negocio digital. Empezarás a ahorrar en impuestos y gastos excesivos y te podrás centrar en escalar tu negocio.",
+        "Tendrás tu empresa lista para facturar y una planificación fiscal clara y definida punto por punto, te ayudaremos con todos los cambios necesarios a aplicar en tu negocio digital. Empezarás a ahorrar en impuestos y gastos excesivos y te podrás centrar en escalar tu negocio.",
       icon: Rocket,
       color: "from-[#225DF6] to-[#1e52d9]",
     },
@@ -25,7 +25,7 @@ export default function ProcessSection() {
       title: "OPTIMIZACIÓN",
       subtitle: "Perfecciona tu estrategia",
       description:
-        "Nos encargaremos de la gestión integral de tu LLC. Ahora que ya tienes optimizado tu negocio, es hora de dar un paso más avanzado, escalar una empresa no es algo sencillo si no tienes experiencia. Te ayudaremos a identificar tus errores y a optimizar tus estrategias fiscales para poder seguir creciendo y asegurar el éxito de tu empresa en el largo plazo.",
+        "Nos encargaremos de la gestión integral de tu LLC. Ahora que ya tienes optimizado tu negocio, es hora de dar un paso más avanzado, una estrategia fiscal no es algo sencillo si no tienes experiencia. Te ayudaremos paso a paso a optimizar tus estrategia fiscal para poder seguir creciendo y asegurar el éxito de tu empresa en el largo plazo.",
       icon: TrendingUp,
       color: "from-purple-400 to-purple-500",
     },
