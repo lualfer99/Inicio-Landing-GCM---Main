@@ -193,7 +193,21 @@ export default function OptimizedFooter() {
             <p className="text-base md:text-lg">
               © {new Date().getFullYear()} GCM SERVICES LLC. Todos los derechos reservados.
             </p>
-            <p className="mt-4 md:mt-0 text-base md:text-lg">Sitio web con fines informativos únicamente.</p>
+            <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 mt-4 md:mt-0">
+              <p className="text-base md:text-lg">Sitio web con fines informativos únicamente.</p>
+              <span className="hidden md:block text-gray-600">|</span>
+              <p className="text-sm text-gray-500">
+                Desarrollado por{" "}
+                <Link
+                  href="https://amai.solutions/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#225DF6] hover:text-[#1e52d9] transition-colors font-medium"
+                >
+                  AMAI
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>
