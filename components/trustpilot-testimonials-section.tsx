@@ -46,7 +46,7 @@ export default function TrustpilotTestimonialsSection() {
   const reviews = [
     {
       name: "Ale",
-      initials: "AL",
+      initials: "A.L",
       country: "ES",
       date: "9 jun 2025",
       rating: 5,
@@ -56,7 +56,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "Sergio",
-      initials: "SE",
+      initials: "S.E",
       country: "ES",
       date: "13 may 2025",
       rating: 5,
@@ -66,7 +66,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "Consumer",
-      initials: "CO",
+      initials: "C.O",
       country: "ES",
       date: "6 may 2025",
       rating: 5,
@@ -76,7 +76,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "Jean Martinez",
-      initials: "JM",
+      initials: "J.M",
       country: "NI",
       date: "25 abr 2025",
       rating: 5,
@@ -86,7 +86,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "Arnau",
-      initials: "AR",
+      initials: "A.R",
       country: "ES",
       date: "24 abr 2025",
       rating: 5,
@@ -96,7 +96,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "Sandra DSJ",
-      initials: "SD",
+      initials: "S.D",
       country: "ES",
       date: "22 abr 2025",
       rating: 5,
@@ -106,7 +106,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "Jordi Ramos",
-      initials: "JR",
+      initials: "J.R",
       country: "ES",
       date: "9 abr 2025",
       rating: 5,
@@ -116,7 +116,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "Centro Mia Técnicas Naturales",
-      initials: "CM",
+      initials: "C.M",
       country: "ES",
       date: "3 abr 2025",
       rating: 5,
@@ -126,7 +126,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "Marcos Pastoriza",
-      initials: "MP",
+      initials: "M.P",
       country: "ES",
       date: "2 abr 2025",
       rating: 5,
@@ -136,7 +136,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "Rio",
-      initials: "RI",
+      initials: "R.I",
       country: "ES",
       date: "2 abr 2025",
       rating: 5,
@@ -146,7 +146,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "Raul Solana",
-      initials: "RS",
+      initials: "R.S",
       country: "ES",
       date: "2 abr 2025",
       rating: 5,
@@ -156,7 +156,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "PIXSTRAT AGENCY LLC",
-      initials: "PA",
+      initials: "P.A",
       country: "ES",
       date: "30 mar 2025",
       rating: 5,
@@ -166,7 +166,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "Marina Dias",
-      initials: "MD",
+      initials: "M.D",
       country: "ES",
       date: "28 mar 2025",
       rating: 5,
@@ -176,7 +176,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "Marcel Fernández",
-      initials: "MF",
+      initials: "M.F",
       country: "ES",
       date: "28 mar 2025",
       rating: 5,
@@ -186,7 +186,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "Monkey Art",
-      initials: "MA",
+      initials: "M.A",
       country: "ES",
       date: "28 mar 2025",
       rating: 5,
@@ -196,7 +196,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "Entrena Tu Centro",
-      initials: "ET",
+      initials: "E.T",
       country: "ES",
       date: "26 mar 2025",
       rating: 5,
@@ -206,7 +206,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "Alejandra Beltramen",
-      initials: "AB",
+      initials: "A.B",
       country: "ES",
       date: "24 mar 2025",
       rating: 5,
@@ -216,7 +216,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "cienciaConciencia",
-      initials: "CC",
+      initials: "C.C",
       country: "ES",
       date: "21 mar 2025",
       rating: 5,
@@ -226,7 +226,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "Victor Semper García",
-      initials: "VS",
+      initials: "V.S",
       country: "ES",
       date: "20 mar 2025",
       rating: 5,
@@ -236,7 +236,7 @@ export default function TrustpilotTestimonialsSection() {
     },
     {
       name: "Paul",
-      initials: "PA",
+      initials: "P.A",
       country: "ES",
       date: "20 mar 2025",
       rating: 5,
@@ -337,7 +337,7 @@ export default function TrustpilotTestimonialsSection() {
       "@id": `https://gcmasesores.io/#review-${index + 1}`,
       author: {
         "@type": "Person",
-        name: review.name,
+        name: review.initials,
       },
       reviewRating: {
         "@type": "Rating",
@@ -399,7 +399,7 @@ export default function TrustpilotTestimonialsSection() {
             }`}
           >
             {/* Trustpilot-style header */}
-            <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 max-w-2xl mx-auto mb-8">
+            <div className="hidden bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 max-w-2xl mx-auto mb-8">
               <div className="flex items-center justify-center gap-3 mb-4">
                 <h3 className="text-xl md:text-2xl font-bold text-gray-900">Nuestras reseñas en</h3>
                 <div className="flex items-center gap-2">
@@ -448,7 +448,7 @@ export default function TrustpilotTestimonialsSection() {
               >
                 {visibleReviews.map((review, index) => (
                   <div
-                    key={`${review.name}-${currentIndex}-${index}`}
+                    key={`${review.initials}-${currentIndex}-${index}`}
                     className={`transform transition-all duration-500 ${
                       isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
                     }`}
@@ -519,7 +519,7 @@ export default function TrustpilotTestimonialsSection() {
           </div>
 
           {/* Bottom CTA */}
-          <div className="text-center mt-12">
+          <div className="hidden text-center mt-12">
             <a
               href="https://es.trustpilot.com/review/gcmasesores.io"
               target="_blank"
@@ -557,7 +557,7 @@ function ReviewCard({ review, isMobile }: { review: any; isMobile: boolean }) {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-semibold text-gray-900 truncate text-base">{review.name}</h4>
+            <h4 className="font-semibold text-gray-900 truncate text-base">{review.initials}</h4>
             <span className="text-gray-500 bg-gray-100 px-2 py-1 rounded text-xs flex-shrink-0">{review.country}</span>
           </div>
 
@@ -582,8 +582,8 @@ function ReviewCard({ review, isMobile }: { review: any; isMobile: boolean }) {
         {/* Footer with Trustpilot link */}
         <div className="pt-3 border-t border-gray-100 flex-shrink-0">
           <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-            <span>Verificado por Trustpilot</span>
-            <div className="flex items-center gap-1">
+            <span>Verificado por GCM</span>
+            <div className="hidden flex items-center gap-1">
               <Star className="w-3 h-3 text-[#00B67A] fill-current" />
               <span className="text-[#00B67A] font-medium">Trustpilot</span>
             </div>
@@ -594,7 +594,7 @@ function ReviewCard({ review, isMobile }: { review: any; isMobile: boolean }) {
             href={review.reviewUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-[#00B67A] hover:text-[#008a5a] font-medium text-sm transition-colors duration-200 group-hover:underline"
+            className="hidden inline-flex items-center gap-2 text-[#00B67A] hover:text-[#008a5a] font-medium text-sm transition-colors duration-200 group-hover:underline"
           >
             <span>Ver reseña completa</span>
             <ExternalLink className="w-3 h-3" />
