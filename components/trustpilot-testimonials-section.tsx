@@ -45,7 +45,7 @@ export default function TrustpilotTestimonialsSection() {
 
   const reviews = [
     {
-      name: "Ale",
+      name: "Ale L",
       initials: "A.L",
       country: "ES",
       date: "9 jun 2025",
@@ -55,7 +55,7 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/users/684675442824b5731e08a8a4",
     },
     {
-      name: "Sergio",
+      name: "Sergio E.",
       initials: "S.E",
       country: "ES",
       date: "13 may 2025",
@@ -65,7 +65,7 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/review/gcmasesores.io",
     },
     {
-      name: "Consumer",
+      name: "Consuelo O.",
       initials: "C.O",
       country: "ES",
       date: "6 may 2025",
@@ -75,7 +75,7 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/review/gcmasesores.io",
     },
     {
-      name: "Jean Martinez",
+      name: "Jean M.",
       initials: "J.M",
       country: "NI",
       date: "25 abr 2025",
@@ -85,7 +85,7 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/review/gcmasesores.io",
     },
     {
-      name: "Arnau",
+      name: "Arnau R.",
       initials: "A.R",
       country: "ES",
       date: "24 abr 2025",
@@ -95,7 +95,7 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/review/gcmasesores.io",
     },
     {
-      name: "Sandra DSJ",
+      name: "Sandra D.",
       initials: "S.D",
       country: "ES",
       date: "22 abr 2025",
@@ -105,7 +105,7 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/review/gcmasesores.io",
     },
     {
-      name: "Jordi Ramos",
+      name: "Jordi R.",
       initials: "J.R",
       country: "ES",
       date: "9 abr 2025",
@@ -115,8 +115,8 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/review/gcmasesores.io",
     },
     {
-      name: "Centro Mia Técnicas Naturales",
-      initials: "C.M",
+      name: "Nico M.",
+      initials: "N.M",
       country: "ES",
       date: "3 abr 2025",
       rating: 5,
@@ -125,7 +125,7 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/review/gcmasesores.io",
     },
     {
-      name: "Marcos Pastoriza",
+      name: "Marcos P.",
       initials: "M.P",
       country: "ES",
       date: "2 abr 2025",
@@ -135,7 +135,7 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/review/gcmasesores.io",
     },
     {
-      name: "Rio",
+      name: "Rio I.",
       initials: "R.I",
       country: "ES",
       date: "2 abr 2025",
@@ -145,7 +145,7 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/review/gcmasesores.io",
     },
     {
-      name: "Raul Solana",
+      name: "Raul S.",
       initials: "R.S",
       country: "ES",
       date: "2 abr 2025",
@@ -155,7 +155,7 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/review/gcmasesores.io",
     },
     {
-      name: "PIXSTRAT AGENCY LLC",
+      name: "Pedro A.",
       initials: "P.A",
       country: "ES",
       date: "30 mar 2025",
@@ -165,7 +165,7 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/review/gcmasesores.io",
     },
     {
-      name: "Marina Dias",
+      name: "Marina D.",
       initials: "M.D",
       country: "ES",
       date: "28 mar 2025",
@@ -175,7 +175,7 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/review/gcmasesores.io",
     },
     {
-      name: "Marcel Fernández",
+      name: "Marcel F.",
       initials: "M.F",
       country: "ES",
       date: "28 mar 2025",
@@ -185,7 +185,7 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/review/gcmasesores.io",
     },
     {
-      name: "Monkey Art",
+      name: "Monica A.",
       initials: "M.A",
       country: "ES",
       date: "28 mar 2025",
@@ -195,7 +195,7 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/review/gcmasesores.io",
     },
     {
-      name: "Entrena Tu Centro",
+      name: "Esperanza T.",
       initials: "E.T",
       country: "ES",
       date: "26 mar 2025",
@@ -205,7 +205,7 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/review/gcmasesores.io",
     },
     {
-      name: "Alejandra Beltramen",
+      name: "Alejandra B.",
       initials: "A.B",
       country: "ES",
       date: "24 mar 2025",
@@ -215,7 +215,7 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/review/gcmasesores.io",
     },
     {
-      name: "cienciaConciencia",
+      name: "Carmen C.",
       initials: "C.C",
       country: "ES",
       date: "21 mar 2025",
@@ -225,7 +225,7 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/review/gcmasesores.io",
     },
     {
-      name: "Victor Semper García",
+      name: "Victor S.",
       initials: "V.S",
       country: "ES",
       date: "20 mar 2025",
@@ -235,7 +235,7 @@ export default function TrustpilotTestimonialsSection() {
       reviewUrl: "https://es.trustpilot.com/review/gcmasesores.io",
     },
     {
-      name: "Paul",
+      name: "Paul A.",
       initials: "P.A",
       country: "ES",
       date: "20 mar 2025",
@@ -429,7 +429,7 @@ export default function TrustpilotTestimonialsSection() {
               Lo que dicen nuestros <span className="text-[#225DF6]">clientes</span>
             </h2>
             <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
-              Más de 500 emprendedores ya han optimizado su fiscalidad con nosotros
+              Más de 500 emprendedores ya han optimizado su fiscalidad con nosotros (reservamos el anonimato de nuestros clientes para mayor seguridad fiscal)
             </p>
           </div>
 
@@ -557,7 +557,7 @@ function ReviewCard({ review, isMobile }: { review: any; isMobile: boolean }) {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-semibold text-gray-900 truncate text-base">{review.initials}</h4>
+            <h4 className="font-semibold text-gray-900 truncate text-base">{review.name}</h4>
             <span className="text-gray-500 bg-gray-100 px-2 py-1 rounded text-xs flex-shrink-0">{review.country}</span>
           </div>
 
