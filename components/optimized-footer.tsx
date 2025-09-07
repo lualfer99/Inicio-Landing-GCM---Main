@@ -24,7 +24,7 @@ export default function OptimizedFooter() {
           <div className="lg:col-span-2">
             <div className="flex items-center mb-6">
               <OptimizedImage
-                src="/images/logo-footer-white.png"
+                src="/images/logo-gcm-white.png"
                 alt="GCMAsesores Logo"
                 width={140}
                 height={45}
