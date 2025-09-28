@@ -13,6 +13,28 @@ export default function ConsultationSection() {
   const calendlyUrl = pathname.includes("gestoria-para-llcs")
     ? "https://calendly.com/d/cndt-ytb-8j3/consulta-fiscal-para-optimizar-una-llc"
     : "https://calendly.com/d/cncj-m4f-7xt/consulta-fiscal-para-crear-una-llc"
+  const [calendlyUrlWithUtms, setCalendlyUrlWithUtms] = useState(calendlyUrl)
+
+  useEffect(() => {
+    // Capturar UTMs de la URL actual
+    const urlParams = new URLSearchParams(window.location.search)
+    const utmParams = new URLSearchParams()
+
+    // Capturar todos los parámetros UTM
+    const utmKeys = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"]
+
+    utmKeys.forEach((key) => {
+      const value = urlParams.get(key)
+      if (value) {
+        utmParams.append(key, value)
+      }
+    })
+
+    // Si hay UTMs, añadirlos a la URL de Calendly
+    if (utmParams.toString()) {
+      setCalendlyUrlWithUtms(`${calendlyUrl}?${utmParams.toString()}`)
+    }
+  }, [calendlyUrl])
 
   useEffect(() => {
     const script = document.createElement("script")
@@ -56,7 +78,7 @@ export default function ConsultationSection() {
     const subject = encodeURIComponent("Solicitud de Asesoría Fiscal - LLC")
     const body = encodeURIComponent(`Hola,
 
-Me gustaría agendar una asesoría fiscal gratuita para evaluar si crear una LLC en EE.UU. es adecuado para mi negocio.
+Me gustaría agendar una asesoría fiscal gratuita para evaluar si crear una LLC en EE.UU. es adecuado para mi empresa.
 
 Información de contacto:
 - Nombre: 
@@ -115,15 +137,15 @@ Gracias,`)
               )}
 
               {!showFallback && (
-              <div
-                className="calendly-inline-widget"
-                data-url={calendlyUrl}
-                style={{
-                  minWidth: "100%",
-                  width: "100%",
-                  height: "800px",
-                }}
-              />
+                <div
+                  className="calendly-inline-widget"
+                  data-url={calendlyUrlWithUtms}
+                  style={{
+                    minWidth: "100%",
+                    width: "100%",
+                    height: "800px",
+                  }}
+                />
               )}
 
               {showFallback && (
