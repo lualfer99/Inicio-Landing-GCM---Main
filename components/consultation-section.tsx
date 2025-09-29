@@ -149,7 +149,13 @@ Gracias,`)
               )}
 
               {!showFallback && (
-                <div
+                <iframe
+                  src={finalCalendlyUrl}
+                  width="100%"
+                  height="800"
+                  frameBorder="0"
+                />
+                /**<div
                   className="calendly-inline-widget"
                   data-url={finalCalendlyUrl}
                   style={{
@@ -157,7 +163,7 @@ Gracias,`)
                     width: "100%",
                     height: "800px",
                   }}
-                />
+                />**/
               )}
 
               {showFallback && (
