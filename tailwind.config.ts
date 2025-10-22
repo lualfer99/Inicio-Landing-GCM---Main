@@ -3,11 +3,18 @@ import type { Config } from "tailwindcss"
 const config: Config = {
   darkMode: ["class"],
   content: [
-    "./pages/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-    "./app/**/*.{ts,tsx}",
-    "./src/**/*.{ts,tsx}",
-    "*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{ts,tsx,mdx}",
+    "./pages/**/*.{ts,tsx,mdx}",
+    "./components/**/*.{ts,tsx,mdx}",
+    "./lib/**/*.{ts,tsx,mdx}",
+    "./hooks/**/*.{ts,tsx,mdx}",
+  ],
+  safelist: [
+    "hidden",
+    "block",
+
+    { pattern: /(text|bg|border)-(red|blue|green|gray|neutral)-(50|100|200|300|400|500|600|700|800|900)/ },
+    { pattern: /col-span-(1|2|3|4|5|6|7|8|9|10|11|12)/ },
   ],
   prefix: "",
   theme: {
