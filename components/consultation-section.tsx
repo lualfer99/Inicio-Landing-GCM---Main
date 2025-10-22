@@ -8,11 +8,45 @@ import { usePathname } from "next/navigation"
 export default function ConsultationSection() {
   const [showFallback, setShowFallback] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const isLoadingRef = useRef(true) // 🔁 Referencia para evitar stale closure
+  const isLoadingRef = useRef(true)
   const pathname = usePathname()
-  const calendlyUrl = pathname.includes("gestoria-para-llcs")
+
+  // URL base de Calendly según la página
+  const baseCalendlyUrl = pathname.includes("gestoria-para-llcs")
     ? "https://calendly.com/d/cndt-ytb-8j3/consulta-fiscal-para-optimizar-una-llc"
     : "https://calendly.com/d/cncj-m4f-7xt/consulta-fiscal-para-crear-una-llc"
+
+  // Estado para la URL final con UTMs
+  const [finalCalendlyUrl, setFinalCalendlyUrl] = useState(baseCalendlyUrl)
+
+  // Capturar UTMs y construir URL final
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search)
+      const utmParams = new URLSearchParams()
+
+      // Lista de parámetros UTM a capturar
+      const utmKeys = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"]
+
+      // Capturar cada parámetro UTM si existe
+      utmKeys.forEach((key) => {
+        const value = urlParams.get(key)
+        if (value) {
+          utmParams.append(key, value)
+        }
+      })
+
+      // Construir URL final
+      if (utmParams.toString()) {
+        const urlWithUtms = `${baseCalendlyUrl}?${utmParams.toString()}`
+        setFinalCalendlyUrl(urlWithUtms)
+        console.log("URL de Calendly con UTMs:", urlWithUtms) // Para debugging
+      } else {
+        setFinalCalendlyUrl(baseCalendlyUrl)
+        console.log("URL de Calendly sin UTMs:", baseCalendlyUrl) // Para debugging
+      }
+    }
+  }, [baseCalendlyUrl])
 
   useEffect(() => {
     const script = document.createElement("script")
@@ -115,15 +149,21 @@ Gracias,`)
               )}
 
               {!showFallback && (
-              <div
-                className="calendly-inline-widget"
-                data-url={calendlyUrl}
-                style={{
-                  minWidth: "100%",
-                  width: "100%",
-                  height: "800px",
-                }}
-              />
+                <iframe
+                  src={finalCalendlyUrl}
+                  width="100%"
+                  height="800"
+                  frameBorder="0"
+                />
+                /**<div
+                  className="calendly-inline-widget"
+                  data-url={finalCalendlyUrl}
+                  style={{
+                    minWidth: "100%",
+                    width: "100%",
+                    height: "800px",
+                  }}
+                />**/
               )}
 
               {showFallback && (
