@@ -3,18 +3,11 @@ import type { Config } from "tailwindcss"
 const config: Config = {
   darkMode: ["class"],
   content: [
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./lib/**/*.{js,ts,jsx,tsx,mdx}",
-    "./hooks/**/*.{js,ts,jsx,tsx,mdx}",
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
     "*.{js,ts,jsx,tsx,mdx}",
-  ],
-  safelist: [
-    "hidden",
-    "block",
-    { pattern: /(text|bg|border)-(red|blue|green|gray|neutral)-(50|100|200|300|400|500|600|700|800|900)/ },
-    { pattern: /col-span-(1|2|3|4|5|6|7|8|9|10|11|12)/ },
   ],
   prefix: "",
   theme: {
@@ -28,7 +21,6 @@ const config: Config = {
     extend: {
       fontFamily: {
         inter: ["Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
-        poppins: ["var(--font-poppins)", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -135,6 +127,6 @@ const config: Config = {
     },
   },
   plugins: [require("tailwindcss-animate")],
-}
+} satisfies Config
 
 export default config
