@@ -73,7 +73,7 @@ export default function OptimizedHeader() {
               onClick={() => handleNavClick("#inicio")}
             >
               <OptimizedImage
-                src="/images/logo-blue.png"
+                src="/images/logo-blue.webp"
                 alt="GCMAsesores Logo"
                 width={140}
                 height={45}
@@ -162,7 +162,7 @@ export default function OptimizedHeader() {
                 onClick={() => handleNavClick("#inicio")}
               >
                 <OptimizedImage
-                  src="/images/logo-blue.png"
+                  src="/images/logo-blue.webp"
                   alt="GCMAsesores Logo"
                   width={120}
                   height={38}
